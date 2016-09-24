@@ -1,0 +1,10 @@
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.pdb
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csprojResolveAssemblyReference.cache
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Datos.resources
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Properties.Resources.resources
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csproj.GenerateResource.Cache
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.exe
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.pdb
+c:\users\marco\documents\visual studio 2013\Projects\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Procesador.resources
