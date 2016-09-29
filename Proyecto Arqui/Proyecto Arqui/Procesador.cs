@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Threading;
 
 namespace Proyecto_Arqui
 {
@@ -18,18 +19,18 @@ namespace Proyecto_Arqui
         private int[] contexto; //34 (R0 - R31 + RL + PC)
         private int[] cacheDatos; //
         private int[] cacheInstrucciones;
-        private Queue<int> hilillos;
-        private int quantum;
+       // private Queue<int> hilillos;
+        private int quantumLocal;
         private int reloj;
-        private int pc;
+        private int PC;
        
-        public Procesador()
+        public Procesador(int numProcesador=0, Barrier sync = null)
         {
             InitializeComponent();            
-            hilillos = new Queue<int>();
-            quantum = 0;
+            //hilillos = new Queue<int>();
+            quantumLocal = 0;
             reloj = 0;
-            pc = 0;
+            PC = 0;
         }
 
         private void P3_Enter(object sender, EventArgs e)

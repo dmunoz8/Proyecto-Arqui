@@ -51,6 +51,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Organizador.cs" />
     <Compile Include="Procesador.cs">
       <SubType>Form</SubType>
     </Compile>

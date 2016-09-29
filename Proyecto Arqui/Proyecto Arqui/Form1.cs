@@ -13,7 +13,15 @@ namespace Proyecto_Arqui
 {
     public partial class Datos : Form
     {
+
         private string path;
+
+        public int _quantum;
+        public int _hilos;
+        Procesador procesador_1;
+        Procesador procesador_2;
+        Procesador procesador_3;
+
 
         public Datos()
         {
@@ -48,17 +56,31 @@ namespace Proyecto_Arqui
 
         private void SiDatos_Click(object sender, EventArgs e)
         {
-            Procesador MIPS = new Procesador();
+
+            _hilos = Int32.Parse(hilos.Text);
+            _quantum = Int32.Parse(quantum.Text);
+            Organizador organizador = new Organizador(_hilos,_quantum, path);
+
             this.Visible = false;
-            MIPS.Visible = true;
-            MIPS.inicializar();
-            MIPS.cargarInstrucciones(path);
-           
+
+            /*Procesador MIPS = new Procesador();
+             this.Visible = false;
+             MIPS.Visible = true;
+             MIPS.inicializar();
+             MIPS.cargarInstrucciones(path); 
+
+           ******* LO MOVI A LA CLASE ORGANIZADOR*****  */
+
         }
 
         private void NoDatos_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void hilos_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
