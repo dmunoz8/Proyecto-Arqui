@@ -22,6 +22,7 @@ namespace Proyecto_Arqui
         private int quantum;
         private int reloj;
         private int pc;
+       
         public Procesador()
         {
             InitializeComponent();            
@@ -38,11 +39,16 @@ namespace Proyecto_Arqui
 
         public void inicializar()
         {
+            memoria = new int[64,4];
+            registros = new int[32];
+            cacheInstrucciones = new int[24];
+            cacheDatos = new int[4];
+
             for (int i = 0; i < 64; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    memoria[1, j] = 1;
+                    memoria[i, j] = 1;
                 }
             }
 
@@ -61,7 +67,7 @@ namespace Proyecto_Arqui
             cacheInstrucciones[22] = -1;
             cacheInstrucciones[23] = -1;
 
-            for (int i = 0; i < 24; i++)
+            for (int i = 0; i < 4; i++)
             {
                 cacheDatos[i] = 0;
             }
@@ -73,7 +79,7 @@ namespace Proyecto_Arqui
            
             try
             {
-                int posicion = 0;
+                int posicion = 24;
                 foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
                 {
                     string contents = File.ReadAllText(files);
@@ -85,12 +91,13 @@ namespace Proyecto_Arqui
                         {
                             memoria[posicion, i] = Int32.Parse(codigos[i]);
                         }
+                        posicion++;
                     }
-                    posicion++;
                 }
                 //int valor = Int32.Parse(contents);
                 //    data.Add(valor);
                 //    CD1.DataSource = data;
+                int a = 0; //Break Point por si quieren revisar la memoria
             }
 
             catch (IOException)

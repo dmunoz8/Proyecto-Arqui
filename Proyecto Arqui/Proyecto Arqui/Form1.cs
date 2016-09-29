@@ -51,7 +51,8 @@ namespace Proyecto_Arqui
             Procesador MIPS = new Procesador();
             this.Visible = false;
             MIPS.Visible = true;
-            MIPS.comenzar(path);
+            MIPS.inicializar();
+            MIPS.cargarInstrucciones(path);
            
         }
 
