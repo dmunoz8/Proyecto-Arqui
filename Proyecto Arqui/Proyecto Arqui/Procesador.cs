@@ -19,10 +19,13 @@ namespace Proyecto_Arqui
         private int[] contexto; //34 (R0 - R31 + RL + PC)
         private int[] cacheDatos; //
         private int[] cacheInstrucciones;
-        private Queue<int> hilillos;
+        //private Queue<int> hilillos;
         private int quantumLocal;
         private int reloj;
         private int PC;
+        public Queue <int> direccionHilillo ;
+
+
         
 
         public Procesador(int numProcesador = 0, Barrier sync = null)
@@ -36,7 +39,7 @@ namespace Proyecto_Arqui
 
     
         //solo para el procesador principal que va a tener la memoria 
-        public void inicializarProcesadorPrincipal() {
+        public void inicializarProcesadorPrincipal(int cantHilillos) {
             memoria = new int[64, 4];
             for (int i = 0; i < 64; i++)
             {
@@ -45,7 +48,7 @@ namespace Proyecto_Arqui
                     memoria[i, j] = 1;
                 }
             }
-            hilillos = new Queue<int>();
+            direccionHilillo = new Queue<int>();
 
         }
         //inicializador de registros y caches  de datos de los tres procesadores 
@@ -77,6 +80,8 @@ namespace Proyecto_Arqui
                 cacheDatos[i] = 0;
             }
         }
+
+
         //el procesador principal carga instrucciones de os txt a memoria principal
         public void cargarInstrucciones(string path)
         {
@@ -91,13 +96,16 @@ namespace Proyecto_Arqui
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(posicion);
+                     
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < 4; i++)
                         {
                             memoria[posicion, i] = Int32.Parse(codigos[i]);
-                        }
+                        }                       
                         posicion++;
                     }
+
                 }
                 //int valor = Int32.Parse(contents);
                 //    data.Add(valor);
@@ -108,6 +116,11 @@ namespace Proyecto_Arqui
             catch (IOException)
             {
             }
+        }
+
+        private void ejecutarInstruccion()
+        {
+            
         }
 
         private void Procesador_FormClosing(object sender, EventArgs e)

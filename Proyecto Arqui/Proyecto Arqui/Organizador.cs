@@ -43,10 +43,16 @@ namespace Proyecto_Arqui
 
         }
 
+        private void repartirHilillos(Thread hilo_proc1, Thread hilo_proc2, Thread hilo_proc3)
+        {
+          
+      
+        }
+
         //el procesador principal carga en memoria las instrucciones contenidas en los txt
         public void cargarMemoria(string path) {
             principal = new Procesador();
-            principal.inicializarProcesadorPrincipal();
+            principal.inicializarProcesadorPrincipal(_cantHilillos);
             principal.Visible=true;
             principal.cargarInstrucciones(path);
         }
@@ -63,6 +69,8 @@ namespace Proyecto_Arqui
             hilo_proc1.Start();
             hilo_proc2.Start();
             hilo_proc3.Start();
+
+            repartirHilillos(hilo_proc1, hilo_proc2, hilo_proc3);
 
            
         }
