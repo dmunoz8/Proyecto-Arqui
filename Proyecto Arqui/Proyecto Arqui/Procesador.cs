@@ -19,32 +19,25 @@ namespace Proyecto_Arqui
         private int[] contexto; //34 (R0 - R31 + RL + PC)
         private int[] cacheDatos; //
         private int[] cacheInstrucciones;
-       // private Queue<int> hilillos;
+        private Queue<int> hilillos;
         private int quantumLocal;
         private int reloj;
         private int PC;
-       
-        public Procesador(int numProcesador=0, Barrier sync = null)
+        
+
+        public Procesador(int numProcesador = 0, Barrier sync = null)
         {
-            InitializeComponent();            
-            //hilillos = new Queue<int>();
+            InitializeComponent();
             quantumLocal = 0;
             reloj = 0;
             PC = 0;
         }
 
-        private void P3_Enter(object sender, EventArgs e)
-        {
 
-        }
-
-        public void inicializar()
-        {
-            memoria = new int[64,4];
-            registros = new int[32];
-            cacheInstrucciones = new int[24];
-            cacheDatos = new int[4];
-
+    
+        //solo para el procesador principal que va a tener la memoria 
+        public void inicializarProcesadorPrincipal() {
+            memoria = new int[64, 4];
             for (int i = 0; i < 64; i++)
             {
                 for (int j = 0; j < 4; j++)
@@ -52,6 +45,17 @@ namespace Proyecto_Arqui
                     memoria[i, j] = 1;
                 }
             }
+            hilillos = new Queue<int>();
+
+        }
+        //inicializador de registros y caches  de datos de los tres procesadores 
+        public void inicializarProcesador()
+        {
+          
+            registros = new int[32];
+            cacheInstrucciones = new int[24];
+            cacheDatos = new int[4];
+
 
             for (int i = 0; i < 32; i++)
             {
@@ -73,7 +77,7 @@ namespace Proyecto_Arqui
                 cacheDatos[i] = 0;
             }
         }
-
+        //el procesador principal carga instrucciones de os txt a memoria principal
         public void cargarInstrucciones(string path)
         {
             BindingList<int> data = new BindingList<int>();   
@@ -109,6 +113,10 @@ namespace Proyecto_Arqui
         private void Procesador_FormClosing(object sender, EventArgs e)
         {
             
+        }
+        private void P3_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }
