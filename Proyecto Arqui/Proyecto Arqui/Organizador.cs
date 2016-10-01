@@ -33,6 +33,10 @@ namespace Proyecto_Arqui
             procesador2 = new Procesador(2, sincronizacion);
             procesador3 = new Procesador(3, sincronizacion);
 
+            procesador1.inicializarProcesador();
+            procesador2.inicializarProcesador();
+            procesador3.inicializarProcesador();
+
             cargarMemoria(path);
             inicializaProcesadores();
            
@@ -49,11 +53,11 @@ namespace Proyecto_Arqui
         //Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores
         private void inicializaProcesadores()
         {
-            Thread hilo_proc1= new Thread(delegate(){ procesador1.inicializarProcesador(); });
+            Thread hilo_proc1= new Thread(delegate(){  });
 
-            Thread hilo_proc2 = new Thread(delegate(){ procesador2.inicializarProcesador(); });
+            Thread hilo_proc2 = new Thread(delegate(){  });
 
-            Thread hilo_proc3 = new Thread(delegate(){ procesador3.inicializarProcesador(); });
+            Thread hilo_proc3 = new Thread(delegate(){  });
            
 
             hilo_proc1.Start();
