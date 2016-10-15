@@ -222,6 +222,42 @@ namespace Proyecto_Arqui
             }
         }
 
+
+        // lectura seria el bloque que desea leer
+        public void ejecutarLW(int direccionMemoria) 
+        {
+            int bloque = calcularBloque(direccionMemoria);
+            int subirBloque = posicionCache(bloque);
+
+            if(bloque == cacheInstrucciones[subirBloque*18 + 16] && cacheInstrucciones[subirBloque*18 + 17] == 1)
+            {
+                //lectura en cache
+            }
+            else //traer bloque a memoria por fallo de cache
+            {
+                //bloquear Cache
+                //bloquear Bus
+                for (int k = 0; k < 16; k++)
+                {
+                    cacheInstrucciones[subirBloque * 18 + k] = memoria[bloque, k];
+                }
+                
+            }
+            
+        }
+
+        public int calcularBloque(int dirMem)
+        {
+            int bloque = dirMem / 16;
+            return bloque;
+        }
+
+        public int posicionCache(int bloque)
+        {
+            int posCache = bloque % 4;
+            return posCache;
+        }
+
         private void ejecutarInstruccion()
         {
             
