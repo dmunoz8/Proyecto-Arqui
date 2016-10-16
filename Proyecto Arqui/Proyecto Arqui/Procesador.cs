@@ -54,12 +54,14 @@ namespace Proyecto_Arqui
         public void inicializarProcesador()
         {
             registros = new int[32];
+            contexto = new int[32];
             cacheInstrucciones = new int[72];
             cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
 
             for (int i = 0; i < 32; i++)
             {
                 registros[i] = 0;
+                contexto[i] = 0;
             }
 
             for (int i = 0; i < 72; i++)
@@ -147,7 +149,7 @@ namespace Proyecto_Arqui
                     {
                         try
                         {
-                            for(int w = 0; w < 7; w++)
+                            for (int w = 0; w < 28; w++)
                             {
                                 sincronizacion.SignalAndWait();
                             }
@@ -163,7 +165,7 @@ namespace Proyecto_Arqui
                         {
                             Monitor.Exit(memoria);
                         }
-                    }                    
+                    }
                 }
                 finally
                 {
@@ -172,63 +174,68 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void EjecutarInstrs()
+        public void EjecutarInstrs(int dirHilillo, int quantum)
         {
-            int[] instruccion = buscarInstruccion();
-            //int P4 = 0;  // Son las instrs en Cache
-
-            switch (instruccion[0])
+            bool termino = false;
+            quantumLocal = quantum;
+            contexto[32] = dirHilillo;
+            cargarContexto();
+            while (quantumLocal > 0)
             {
-                case 2:     // JR
-                    PC = registros[instruccion[1]];
-                    break;
+                int[] instruccion = buscarInstruccion();
+                PC += 4;
+                switch (instruccion[0])
+                {
+                    case 2:     // JR
+                        PC = registros[instruccion[1]];
+                        break;
 
-                case 3:     // JAL
-                    registros[31] = PC;
-                    PC += instruccion[3];
-                    break;
+                    case 3:     // JAL
+                        registros[31] = PC;
+                        PC += instruccion[3];
+                        break;
 
-                case 4:     // BEQZ
-                    if (registros[instruccion[1]] == 0)
-                    {
-                        PC += instruccion[3] * 4;
-                    }
-                    break;
+                    case 4:     // BEQZ
+                        if (registros[instruccion[1]] == 0)
+                        {
+                            PC += instruccion[3] * 4;
+                        }
+                        break;
 
-                case 5:     // BENZ
-                    if (registros[instruccion[1]] != 0)
-                    {
-                        PC += instruccion[3] * 4;
-                    }
-                    break;
+                    case 5:     // BENZ
+                        if (registros[instruccion[1]] != 0)
+                        {
+                            PC += instruccion[3] * 4;
+                        }
+                        break;
 
-                case 8:     // DADDI
-                    registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
-                    break;
+                    case 8:     // DADDI
+                        registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
+                        break;
 
-                case 12:    // DMUL
-                    registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
-                    break;
+                    case 12:    // DMUL
+                        registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
+                        break;
 
-                case 14:    // DDIV
-                    registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
-                    break;
+                    case 14:    // DDIV
+                        registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
+                        break;
 
-                case 32:    // DADD
-                    registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
-                    break;
+                    case 32:    // DADD
+                        registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
+                        break;
 
-                case 34:    // DSUB
-                    registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
-                    break;
+                    case 34:    // DSUB
+                        registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
+                        break;
 
-                case 35:    // LW
-                            // ejecutarLW(ref a, ref b, ref c, registros[R1] + R3, R2);
-                    break;
+                    case 35:    // LW
+                                // ejecutarLW(ref a, ref b, ref c, registros[R1] + R3, R2);
+                        break;
 
-                case 43:    // SW
-                        // ejecutarSW(ref a, ref b, ref c, registros[1] + registros[3], R2);
-                    break;
+                    case 43:    // SW
+                                // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
+                        break;
 
                 case 63:    // Codigo para terminar el programa
                             // hilillosTerminados++;
@@ -305,6 +312,19 @@ namespace Proyecto_Arqui
                     Monitor.Exit(this.cacheDatos);
                 }
             }
+                    case 63:    // Codigo para terminar el programa
+                                // hilillosTerminados++;
+                        termino = true;
+                        break;
+                }
+                quantumLocal--;
+            }
+            if (!termino) //Si se le acabo el quantum lo regreso a la cola
+            {
+                direccionHilillo.Enqueue(PC);
+                guardarContexto();
+            }          
+        }
 
 
             //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
@@ -366,7 +386,7 @@ namespace Proyecto_Arqui
                         {
                      ca       try
                             {
-                                for (int i = 0; i < 7; ++i)
+                                for (int w = 0; w < 28; w++)
                                 {
                                     //  Tarda 7 ciclos, se envían 7 señales
                                     sincronizacion.SignalAndWait();
