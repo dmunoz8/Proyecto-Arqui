@@ -237,9 +237,17 @@ namespace Proyecto_Arqui
                                 // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
                         break;
 
-                case 63:    // Codigo para terminar el programa
-                            // hilillosTerminados++;
-                    break;
+                    case 63:    // Codigo para terminar el programa
+                                // hilillosTerminados++;
+                        termino = true;
+                        break;
+                }
+                quantumLocal--;
+            }
+            if (!termino) //Si se le acabo el quantum lo regreso a la cola
+            {
+                direccionHilillo.Enqueue(PC);
+                guardarContexto();
             }
         }
 
@@ -312,20 +320,7 @@ namespace Proyecto_Arqui
                     Monitor.Exit(this.cacheDatos);
                 }
             }
-                    case 63:    // Codigo para terminar el programa
-                                // hilillosTerminados++;
-                        termino = true;
-                        break;
-                }
-                quantumLocal--;
-            }
-            if (!termino) //Si se le acabo el quantum lo regreso a la cola
-            {
-                direccionHilillo.Enqueue(PC);
-                guardarContexto();
-            }          
-        }
-
+                   
 
             //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
             if (cantInvalidadas==2) {
