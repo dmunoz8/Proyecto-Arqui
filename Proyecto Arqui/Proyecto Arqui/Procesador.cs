@@ -16,30 +16,29 @@ namespace Proyecto_Arqui
     {
         private int[,] memoria; //64*16 = 1024 bytes
         private int[] registros; //32 (R0 - R31)
-        private int[] contexto; //34 (R0 - R31 + RL + PC)
+        private int[] contexto; //33 (R0 - R31 + PC) . 34 si se agrega RL
         private int[] cacheDatos; // 4 bloques de una palabra
         private int[] cacheInstrucciones; // 4 bloques de 4 palabras
         private Queue<int> hilillos;
+        private Queue<int> direccionHilillo;
+        private Barrier sincronizacion;
         private int quantumLocal;
         private int reloj;
+        private int RL;
         private int PC;
-        public Queue <int> direccionHilillo ;
 
-
-        
-
-        public Procesador(int numProcesador = 0, Barrier sync = null)
+        public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
             InitializeComponent();
             quantumLocal = 0;
             reloj = 0;
             PC = 0;
+            this.sincronizacion = sincronizacion;
         }
 
-
-    
         //solo para el procesador principal que va a tener la memoria 
-        public void inicializarProcesadorPrincipal() {
+        public void inicializarProcesadorPrincipal()
+        {
             memoria = new int[64, 16];
             for (int i = 0; i < 64; i++)
             {
@@ -49,16 +48,14 @@ namespace Proyecto_Arqui
                 }
             }
             direccionHilillo = new Queue<int>();
-
         }
-        //inicializador de registros y caches  de datos de los tres procesadores 
+
+        //inicializador de registros y caches de datos de los tres procesadores 
         public void inicializarProcesador()
         {
-          
             registros = new int[32];
             cacheInstrucciones = new int[72];
-            cacheDatos = new int[4];
-
+            cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
 
             for (int i = 0; i < 32; i++)
             {
@@ -70,23 +67,25 @@ namespace Proyecto_Arqui
                 cacheInstrucciones[i] = 0;
             }
 
-            cacheInstrucciones[17] = -1;
+            cacheInstrucciones[17] = -1;  // -1 = invalido, 1 = valido
             cacheInstrucciones[35] = -1;
             cacheInstrucciones[53] = -1;
             cacheInstrucciones[71] = -1;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 12; i++)
             {
                 cacheDatos[i] = 0;
             }
+            cacheDatos[2] = -1;  // -1 = invalido, 1 = valido
+            cacheDatos[5] = -1;
+            cacheDatos[8] = -1;
+            cacheDatos[11] = -1;
         }
 
-
-        //el procesador principal carga instrucciones de os txt a memoria principal
+        //el procesador principal carga instrucciones de los txt a memoria principal
         public void cargarInstrucciones(string path)
         {
-            BindingList<int> data = new BindingList<int>();   
-           
+            BindingList<int> data = new BindingList<int>();
             try
             {
                 int posicion = 24;
@@ -97,22 +96,20 @@ namespace Proyecto_Arqui
                     foreach (string instruccion in instrucciones)
                     {
                         if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(posicion);
-                     
+
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < 16; i++)
                         {
                             memoria[posicion, i] = Int32.Parse(codigos[i]);
-                        }                       
+                        }
                         posicion++;
                     }
-
                 }
                 //int valor = Int32.Parse(contents);
                 //    data.Add(valor);
                 //    CD1.DataSource = data;
                 int a = 0; //Break Point por si quieren revisar la memoria
             }
-
             catch (IOException)
             {
             }
@@ -124,112 +121,129 @@ namespace Proyecto_Arqui
             int posicionCache = bloque % 4;
             int lengthMemoria = 0;
             int i = -1;
-            //bloquear BUS
-
-            switch(posicionCache)
+            if (Monitor.TryEnter(cacheInstrucciones))
             {
-                case 0:
-                    i = 0;
-                    break;
+                try
+                {
+                    switch (posicionCache)
+                    {
+                        case 0:
+                            i = 0;
+                            break;
 
-                case 1:
-                    i = 18;
-                    break;
+                        case 1:
+                            i = 18;
+                            break;
 
-                case 2:
-                    i = 35;
-                    break;
+                        case 2:
+                            i = 35;
+                            break;
 
-                case 3:
-                    i = 54;
-                    break;
+                        case 3:
+                            i = 54;
+                            break;
+                    }
+                    if (Monitor.TryEnter(memoria))
+                    {
+                        try
+                        {
+                            for(int w = 0; w < 7; w++)
+                            {
+                                sincronizacion.SignalAndWait();
+                            }
+                            while (lengthMemoria < 16)
+                            {
+                                cacheInstrucciones[i] = memoria[bloque, lengthMemoria];
+                                lengthMemoria++;
+                                i++;
+                            }
+                            PC += 4;
+                        }
+                        finally
+                        {
+                            Monitor.Exit(memoria);
+                        }
+                    }                    
+                }
+                finally
+                {
+                    Monitor.Exit(cacheInstrucciones);
+                }
             }
-
-            while(lengthMemoria < 16)
-            {
-                cacheInstrucciones[i] = memoria[bloque, lengthMemoria];
-                lengthMemoria++;
-                i++;
-            }
-            PC += 4;
-            //Liberar BUS
         }
 
         public void EjecutarInstrs()
         {
-            int codigoOperacion = 0;
-            int P1 = 0;
-            int P2 = 0;
-            int P3 = 0;
-            int P4 = 0;  // Son las instrs en Cache
+            int[] instruccion = buscarInstruccion();
+            //int P4 = 0;  // Son las instrs en Cache
 
-            switch (codigoOperacion)
+            switch (instruccion[0])
             {
                 case 2:     // JR
-                    PC = registros[P1];
+                    PC = registros[instruccion[1]];
                     break;
 
                 case 3:     // JAL
                     registros[31] = PC;
-                    PC += P3;
+                    PC += instruccion[3];
                     break;
 
                 case 4:     // BEQZ
-                    if (registros[P1] == 0)
+                    if (registros[instruccion[1]] == 0)
                     {
-                        PC += P3 * 4;
+                        PC += instruccion[3] * 4;
                     }
                     break;
 
                 case 5:     // BENZ
-                    if (registros[P1] != 0)
+                    if (registros[instruccion[1]] != 0)
                     {
-                        PC += P3 * 4;
+                        PC += instruccion[3] * 4;
                     }
                     break;
 
                 case 8:     // DADDI
-                    registros[P2] = registros[P1] + P3;
+                    registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
                     break;
 
                 case 12:    // DMUL
-                    registros[P3] = registros[P1] * registros[P2];
+                    registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
                     break;
 
                 case 14:    // DDIV
-                    registros[P3] = registros[P1] / registros[P2];
+                    registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
                     break;
 
                 case 32:    // DADD
-                    registros[P3] = registros[P1] + registros[P2];
+                    registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
                     break;
 
                 case 34:    // DSUB
-                    registros[P3] = registros[P1] - registros[P2];
+                    registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
                     break;
 
                 case 35:    // LW
-                   // ejecutarLW(ref a, ref b, ref c, registros[R1] + R3, R2);
+                            // ejecutarLW(ref a, ref b, ref c, registros[R1] + R3, R2);
                     break;
 
                 case 43:    // SW
-                   // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
+                            // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
                     break;
 
                 case 63:    // Codigo para terminar el programa
-                   // ++hilillosTerminados;
+                            // hilillosTerminados++;
                     break;
             }
         }
 
 
         // lectura seria el bloque que desea leer
-        public void ejecutarLW(int direccionMemoria) 
+        public void ejecutarLW(int direccionMemoria)
         {
             int bloque = calcularBloque(direccionMemoria);
             int subirBloque = posicionCache(bloque);
 
-            if(bloque == cacheInstrucciones[subirBloque*18 + 16] && cacheInstrucciones[subirBloque*18 + 17] == 1)
+            if (bloque == cacheInstrucciones[subirBloque * 18 + 16] && cacheInstrucciones[subirBloque * 18 + 17] == 1)
             {
                 //lectura en cache
             }
@@ -241,14 +255,58 @@ namespace Proyecto_Arqui
                 {
                     cacheInstrucciones[subirBloque * 18 + k] = memoria[bloque, k];
                 }
-                
             }
-            
         }
 
-        public int calcularBloque(int dirMem)
+        public void ejecutarLW(int direccionMemoria, int numeroRegistro)
         {
-            int bloque = dirMem / 16;
+            int bloque = calcularBloque(direccionMemoria);          // Bloque en memoria donde esta el dato            
+            int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
+            //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
+
+            if (Monitor.TryEnter(cacheDatos))
+            {
+                try
+                {
+                    //Si el dato está en caché y está valido, lo copio al registro 
+                    if (cacheDatos[posicionC * 3 + 1] == bloque && cacheDatos[posicionC * 3 + 2] != -1)
+                    {
+                        registros[numeroRegistro] = cacheDatos[posicionC * 3];//carga al registro
+                    }
+                    else
+                    {
+                        //no esta en cache o esta invalido, lo traigo de memoria
+                        if (Monitor.TryEnter(memoria))
+                        {
+                            try
+                            {
+                                for (int i = 0; i < 7; ++i)
+                                {
+                                    //  Tarda 7 ciclos, se envían 7 señales
+                                    sincronizacion.SignalAndWait();
+                                }
+                                //Se sube a caché y se carga en el registro
+                                cacheDatos[posicionC * 3] = memoria[bloque, 0]; //REVISAR ESTA POSICION
+                                cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
+                                cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
+                                registros[numeroRegistro] = cacheDatos[posicionC * 3];
+                            }
+                            finally
+                            {
+                                Monitor.Exit(memoria);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(cacheDatos);
+                }
+            }
+        }
+        public int calcularBloque(int direccionMemoria)
+        {
+            int bloque = direccionMemoria / 16;
             return bloque;
         }
 
@@ -258,19 +316,55 @@ namespace Proyecto_Arqui
             return posCache;
         }
 
-        private void ejecutarInstruccion()
+        private void cargarContexto()
         {
-            
+            for (int i = 0; i < 32; i++)
+            {
+                registros[i] = contexto[i];
+            }
+            PC = contexto[32];
         }
 
-        private void Procesador_FormClosing(object sender, EventArgs e)
+        private void guardarContexto()
         {
-            
+            for (int i = 0; i < 32; i++)
+            {
+                contexto[i] = registros[i];
+            }
+            contexto[32] = PC;
         }
-        private void P3_Enter(object sender, EventArgs e)
-        {
 
+        // Busca las instruccion a ejecutar en la cache de instrucciones
+        public int[] buscarInstruccion()
+        {
+            int bloque = PC / 16;      // Para buscar en la etiqueta de la memoria caché
+            int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
+            int[] instruccion = new int[4];
+            if (Monitor.TryEnter(cacheInstrucciones))
+            {
+                try
+                {
+                    if (cacheInstrucciones[bloque * 18 + 16] != bloque)    // Hay fallo de cache?
+                    {
+                        pasarInstrMemoriaCache();
+                    }
+
+                    for (int i = 0; i < 4; i++, desplazamiento++)
+                    {
+                        instruccion[i] = cacheInstrucciones[bloque * 18 + desplazamiento];
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(cacheInstrucciones);
+                }
+            }
+            else
+            {
+                //PC -= 4;
+                //libero
+            }
+            return instruccion;
         }
     }
 }
-    

@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.IO;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Proyecto_Arqui
 {
@@ -52,7 +42,7 @@ namespace Proyecto_Arqui
         //el procesador principal carga en memoria las instrucciones contenidas en los txt
         public void cargarMemoria(string path) {
             principal = new Procesador();
-            principal.inicializarProcesadorPrincipal(_cantHilillos);
+            principal.inicializarProcesadorPrincipal();
             principal.Visible=true;
             principal.cargarInstrucciones(path);
         }
