@@ -20,7 +20,7 @@ namespace Proyecto_Arqui
         private int[] cacheDatos; // 4 bloques de una palabra
         private int[] cacheInstrucciones; // 4 bloques de 4 palabras
         private Queue<int> hilillos;
-        private Queue<int> direccionHilillo;
+        private Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         private Barrier sincronizacion;
         private int quantumLocal;
         private int reloj;
@@ -227,7 +227,7 @@ namespace Proyecto_Arqui
                     break;
 
                 case 43:    // SW
-                            // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
+                        // ejecutarSW(ref a, ref b, ref c, registros[1] + registros[3], R2);
                     break;
 
                 case 63:    // Codigo para terminar el programa
@@ -235,6 +235,92 @@ namespace Proyecto_Arqui
                     break;
             }
         }
+
+        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro)
+        {
+            int bloque = calcularBloque(dirMem);
+            int posicionC = posicionCache(bloque);
+            int cantInvalidadas = 0;
+
+            int posEtiqueta = 0;
+            int posEstado = 0;
+
+            bool datoEnMiCache = false;
+
+            int datoEscribir = this.registros[numRegistro];
+            
+            if (Monitor.TryEnter(a.cacheDatos)) {
+                try
+                {
+                    //verificar si esta en la cache del procesador a
+                    if (a.cacheDatos[posEtiqueta] == bloque ) {    //si tiene el dato
+                        if (a.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                        {
+                            a.cacheDatos[posEstado] = -1; 
+                        }
+                        cantInvalidadas++;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(a.cacheDatos);
+                }
+            }
+            if (Monitor.TryEnter(b.cacheDatos))
+            {
+                try
+                {
+                    //verificar si esta en la cache del procesador b
+                    if (b.cacheDatos[posEtiqueta] == bloque){    //si tiene el dato
+                        if (b.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                        {
+                            b.cacheDatos[posEstado] = -1;
+                        }
+                        cantInvalidadas++;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(b.cacheDatos);
+                }
+            }
+
+
+            //verificar si lo tengo en mi cahe e invalidarlo
+            if (Monitor.TryEnter(this.cacheDatos))
+            {
+                try
+                {
+                    //verificar si esta en la cache del procesador b
+                    if (this.cacheDatos[posEtiqueta] == bloque) {    //si tiene el dato
+                        if (this.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                        {
+                            this.cacheDatos[posEstado] = -1;
+                        }
+                        datoEnMiCache = true;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(this.cacheDatos);
+                }
+            }
+
+
+            //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+            if (cantInvalidadas==2) {
+                if (datoEnMiCache) {
+                    //escribo en mi cache
+                    this.cacheDatos[posicionC] = datoEscribir;
+                    this.cacheDatos[posEstado] = 1;  
+                }
+                //escribo en memoria
+                memoria[1, 2] = datoEscribir;
+
+
+            }
+
+        }     
 
 
         // lectura seria el bloque que desea leer
@@ -278,7 +364,7 @@ namespace Proyecto_Arqui
                         //no esta en cache o esta invalido, lo traigo de memoria
                         if (Monitor.TryEnter(memoria))
                         {
-                            try
+                     ca       try
                             {
                                 for (int i = 0; i < 7; ++i)
                                 {
