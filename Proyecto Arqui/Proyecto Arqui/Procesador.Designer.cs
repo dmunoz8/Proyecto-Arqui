@@ -80,7 +80,6 @@
             this.P3.TabIndex = 1;
             this.P3.TabStop = false;
             this.P3.Text = "Procesador 3";
-            this.P3.Enter += new System.EventHandler(this.P3_Enter);
             // 
             // ID1
             // 
@@ -176,7 +175,6 @@
             this.Controls.Add(this.P1);
             this.Name = "Procesador";
             this.Text = "Procesador";
-            this.Load += new System.EventHandler(this.Procesador_FormClosing);
             this.P1.ResumeLayout(false);
             this.P1.PerformLayout();
             this.P2.ResumeLayout(false);

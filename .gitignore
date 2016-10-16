@@ -1,3 +1,6 @@
+bin/*
+obj/*
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -46,3 +49,4 @@ Network Trash Folder
 Temporary Items
 .apdisk
 *.cache
+/Proyecto Arqui/Proyecto Arqui/obj/Debug
