@@ -31,12 +31,6 @@ namespace Proyecto_Arqui
             inicializaProcesadores();
         }
 
-        private void repartirHilillos(Thread hilo_proc1, Thread hilo_proc2, Thread hilo_proc3)
-        {
-
-
-        }
-
         //el procesador principal carga en memoria las instrucciones contenidas en los txt
         public void cargarMemoria(string path)
         {
@@ -48,15 +42,20 @@ namespace Proyecto_Arqui
         //Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores
         private void inicializaProcesadores()
         {
-            Thread hilo_proc1 = new Thread(delegate () { });
-            Thread hilo_proc2 = new Thread(delegate () { });
-            Thread hilo_proc3 = new Thread(delegate () { });
+            Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
+            Thread hilo_proc2 = new Thread(delegate () { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
+            Thread hilo_proc3 = new Thread(delegate () { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
 
             hilo_proc1.Start();
             hilo_proc2.Start();
             hilo_proc3.Start();
 
-            repartirHilillos(hilo_proc1, hilo_proc2, hilo_proc3);
+            //SincronizacionCiclos()
+        }
+
+        public void imprimirDatos()
+        {
+
         }
     }
 }

@@ -9,3 +9,4 @@ C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto A
 C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csproj.GenerateResource.Cache
 C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.exe
 C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.pdb
+C:\Users\Jeffry\Documents\Visual Studio 2015\Projects\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
