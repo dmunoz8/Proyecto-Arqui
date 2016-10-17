@@ -102,7 +102,10 @@ namespace Proyecto_Arqui
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < 16; i++)
                         {
-                            memoria[posicion, i] = Int32.Parse(codigos[i]);
+                            if (i < 16 && i < codigos.Length)
+                            {
+                                memoria[posicion, i] = Int32.Parse(codigos[i]);
+                            }
                         }
                         posicion++;
                     }
@@ -110,7 +113,6 @@ namespace Proyecto_Arqui
                 //int valor = Int32.Parse(contents);
                 //    data.Add(valor);
                 //    CD1.DataSource = data;
-                int a = 0; //Break Point por si quieren revisar la memoria
             }
             catch (IOException)
             {
@@ -379,7 +381,7 @@ namespace Proyecto_Arqui
                         //no esta en cache o esta invalido, lo traigo de memoria
                         if (Monitor.TryEnter(memoria))
                         {
-                     ca       try
+                        try
                             {
                                 for (int w = 0; w < 28; w++)
                                 {
@@ -405,6 +407,7 @@ namespace Proyecto_Arqui
                 }
             }
         }
+
         public int calcularBloque(int direccionMemoria)
         {
             int bloque = direccionMemoria / 16;
