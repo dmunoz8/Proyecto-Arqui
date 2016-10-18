@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace Proyecto_Arqui
 {
@@ -17,6 +18,7 @@ namespace Proyecto_Arqui
         {
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
+            reloj = 0;
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
             procesador1 = new Procesador(1, sincronizacion);
@@ -51,9 +53,57 @@ namespace Proyecto_Arqui
             hilo_proc2.Start();
             hilo_proc3.Start();
 
-            //SincronizacionCiclos()
+            sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
         }
 
+        /// <summary>
+        /// Metodo para la sincronizacion de los ciclos de reloj entre procesadores.
+        /// Se revisa si hay al menos un procesador corriendo. Si hay un procesador
+        /// que ya no esta corriendo, se remueve de la barrera, para mantener sincronizacion.
+        /// </summary>
+        /// <param name="proc1">Procesador a sincronizar</param>
+        /// <param name="proc2">Procesador a sincronizar</param>
+        /// <param name="proc3">Procesador a sincronizar</param>
+        public void sincronizarReloj(Thread proc1, Thread proc2, Thread proc3)
+        {
+            Console.WriteLine("\nAvance del reloj:");
+
+            while (sincronizacion.ParticipantCount > 1)
+            {
+                //Variables para saber cual hilo se ha removido de la barrera
+                bool proc1Corriendo = true;
+                bool proc2Corriendo = true;
+                bool proc3Corriendo = true;
+
+                //Se revisa si los procesadores siguen trabajando
+                if (!proc1.IsAlive && proc1Corriendo)
+                {
+                    proc1Corriendo = false;
+                    sincronizacion.RemoveParticipant();
+                }
+                if (!proc2.IsAlive && proc2Corriendo)
+                {
+                    proc2Corriendo = false;
+                    sincronizacion.RemoveParticipant();
+                }
+                if (!proc3.IsAlive && proc3Corriendo)
+                {
+                    proc3Corriendo = false;
+                    sincronizacion.RemoveParticipant();
+                }
+
+                //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
+                reloj++;
+                procesador1.reloj = reloj;
+                procesador2.reloj = reloj;
+                procesador3.reloj = reloj;
+
+                //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
+                sincronizacion.SignalAndWait(); 
+
+                //Console.WriteLine(reloj);
+            }
+        }
         public void imprimirDatos()
         {
 

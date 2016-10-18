@@ -164,18 +164,25 @@ namespace Proyecto_Arqui
                                 lengthMemoria++;
                                 i++;
                             }
-                            PC += 4;
                         }
                         finally
                         {
                             Monitor.Exit(p.memoria);
                         }
                     }
+                    else
+                    {
+                        sincronizacion.SignalAndWait();
+                    }
                 }
                 finally
                 {
                     Monitor.Exit(cacheInstrucciones);
                 }
+            }
+            else
+            {
+                sincronizacion.SignalAndWait();
             }
         }
 
@@ -246,14 +253,16 @@ namespace Proyecto_Arqui
                             break;
 
                         case 63:    // Codigo para terminar el programa
-                                    // hilillosTerminados++;
                             p.direccionHilillo.Enqueue(PC);
                             guardarContexto();
                             break;
                     }
                     quantumLocal--;
-                    reloj++;
-                    sincronizacion.SignalAndWait();
+                    //reloj++;
+                    //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
+                    //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
+                    sincronizacion.SignalAndWait();  
+                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 }
             }
         }
@@ -386,12 +395,20 @@ namespace Proyecto_Arqui
                                 Monitor.Exit(memoria);
                             }
                         }
+                        else
+                        {
+                            sincronizacion.SignalAndWait();
+                        }
                     }
                 }
                 finally
                 {
                     Monitor.Exit(cacheDatos);
                 }
+            }
+            else
+            {
+                sincronizacion.SignalAndWait();
             }
         }
 
