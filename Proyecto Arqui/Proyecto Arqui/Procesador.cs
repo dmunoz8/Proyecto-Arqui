@@ -89,27 +89,33 @@ namespace Proyecto_Arqui
         //el procesador principal carga instrucciones de los txt a memoria principal
         public void cargarInstrucciones(string path)
         {
-            BindingList<int> data = new BindingList<int>();
+            //BindingList<int> data = new BindingList<int>();
             try
             {
-                int posicion = 24;
+                int fila = 24;
+                int col = 0;
                 foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
                 {
                     string contents = File.ReadAllText(files);
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(posicion);
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila*16);
 
                         string[] codigos = instruccion.Split(' ');
-                        for (int i = 0; i < 16; i++)
+                        for (int i = 0; i < codigos.Length; i++)
                         {
-                            if (i < 16 && i < codigos.Length)
+                            if (col < 16)
                             {
-                                memoria[posicion, i] = Int32.Parse(codigos[i]);
+                                memoria[fila, col] = Int32.Parse(codigos[i]);
+                                col++;
+                            }
+                            else
+                            {
+                                fila++;
+                                col = 0;
                             }
                         }
-                        posicion++;
                     }
                 }
                 //int valor = Int32.Parse(contents);
@@ -153,11 +159,11 @@ namespace Proyecto_Arqui
                     {
                         try
                         {
-                            for (int w = 0; w < 28; w++)
+                           /* for (int w = 0; w < 28; w++)
                             {
                                 //de caché a memoria = 28 ciclos
-                                sincronizacion.SignalAndWait();
-                            }
+                                //sincronizacion.SignalAndWait();
+                            }*/
                             while (lengthMemoria < 16)
                             {
                                 cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
@@ -263,6 +269,9 @@ namespace Proyecto_Arqui
                     //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
                     sincronizacion.SignalAndWait();  
                     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    reloj++;
+                    imprimir(ref p);
+                    //sincronizacion.SignalAndWait();
                 }
             }
         }
@@ -273,8 +282,13 @@ namespace Proyecto_Arqui
             int posicionC = posicionCache(bloque);
             int cantInvalidadas = 0;
 
+            //posiciones de la cache
             int posEtiqueta = 0;
             int posEstado = 0;
+
+            //posiciones n y m de la memoria
+            int pos_1;
+            int pos_2;
 
             bool datoEnMiCache = false;
 
@@ -343,6 +357,9 @@ namespace Proyecto_Arqui
 
 
             //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+
+            //si el dato esta en mi cache lo escribo ahi y en memoria
+            //si no esta en mi cache solo escribo en memoria
             if (cantInvalidadas == 2)
             {
                 if (datoEnMiCache)
@@ -352,7 +369,24 @@ namespace Proyecto_Arqui
                     this.cacheDatos[posEstado] = 1;
                 }
                 //escribo en memoria
-                memoria[1, 2] = datoEscribir;
+                if (Monitor.TryEnter(memoria))
+                {
+                    try
+                    {
+                        for (int w = 0; w < 7; w++)
+                        {
+                            //  Tarda 7 ciclos, se envían 7 señales
+                            sincronizacion.SignalAndWait();
+                        }
+                        memoria[pos_1, pos_2] = datoEscribir;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(memoria);
+                    }
+                }
+
+               
             }
 
         }
@@ -445,21 +479,22 @@ namespace Proyecto_Arqui
         // Busca las instruccion a ejecutar en la cache de instrucciones
         public int[] buscarInstruccion(ref Procesador p)
         {
-            int bloque = PC / 16;      // Para buscar en la etiqueta de la memoria caché
+            int bloque = PC / 16;
+            int pos = bloque % 4; // Para buscar en la etiqueta de la memoria caché
             int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
             int[] instruccion = new int[4];
             if (Monitor.TryEnter(cacheInstrucciones))
             {
                 try
                 {
-                    if (cacheInstrucciones[bloque * 18 + 16] != bloque)    // Hay fallo de cache?
+                    if (cacheInstrucciones[pos * 18 + 16] != bloque)    // Hay fallo de cache?
                     {
                         pasarInstrMemoriaCache(ref p);
                     }
 
                     for (int i = 0; i < 4; i++, desplazamiento++)
                     {
-                        instruccion[i] = cacheInstrucciones[bloque * 18 + desplazamiento];
+                        instruccion[i] = cacheInstrucciones[pos * 18 + desplazamiento];
                     }
                 }
                 finally
@@ -473,6 +508,16 @@ namespace Proyecto_Arqui
                 //libero
             }
             return instruccion;
+        }
+
+        public void imprimir(ref Procesador p)
+        {
+            BindingList<int> data = new BindingList<int>();
+            for(int i = 0; i < 32; i++)
+            {
+                data.Add(registros[i]);               
+            }
+            CD1.DataSource = data;
         }
 
         private void P1_Enter(object sender, EventArgs e)
