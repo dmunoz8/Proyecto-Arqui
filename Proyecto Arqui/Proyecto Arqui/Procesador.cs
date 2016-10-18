@@ -14,18 +14,18 @@ namespace Proyecto_Arqui
 {
     public partial class Procesador : Form
     {
-        private int[,] memoria; //64*16 = 1024 bytes
-        private int[] registros; //32 (R0 - R31)
-        private int[] contexto; //33 (R0 - R31 + PC) . 34 si se agrega RL
-        private int[] cacheDatos; // 4 bloques de una palabra
-        private int[] cacheInstrucciones; // 4 bloques de 4 palabras
-        private Queue<int> hilillos;
-        private Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
-        private Barrier sincronizacion;
-        private int quantumLocal;
-        private int reloj;
-        private int RL;
-        private int PC;
+        public int[,] memoria; //64*16 = 1024 bytes
+        public int[] registros; //32 (R0 - R31)
+        public int[] contexto; //33 (R0 - R31 + PC) . 34 si se agrega RL
+        public int[] cacheDatos; // 4 bloques de una palabra
+        public int[] cacheInstrucciones; // 4 bloques de 4 palabras
+        public Queue<int> hilillos;
+        public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
+        public Barrier sincronizacion;
+        public int quantumLocal;
+        public int reloj;
+        public int RL;
+        public int PC;
 
         public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
@@ -54,7 +54,7 @@ namespace Proyecto_Arqui
         public void inicializarProcesador()
         {
             registros = new int[32];
-            contexto = new int[32];
+            contexto = new int[33];
             cacheInstrucciones = new int[72];
             cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
 
@@ -63,6 +63,8 @@ namespace Proyecto_Arqui
                 registros[i] = 0;
                 contexto[i] = 0;
             }
+
+            contexto[32] = 0;
 
             for (int i = 0; i < 72; i++)
             {
@@ -87,37 +89,45 @@ namespace Proyecto_Arqui
         //el procesador principal carga instrucciones de los txt a memoria principal
         public void cargarInstrucciones(string path)
         {
-            BindingList<int> data = new BindingList<int>();
+            //BindingList<int> data = new BindingList<int>();
             try
             {
-                int posicion = 24;
+                int fila = 24;
+                int col = 0;
                 foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
                 {
                     string contents = File.ReadAllText(files);
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(posicion);
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila*16);
 
                         string[] codigos = instruccion.Split(' ');
-                        for (int i = 0; i < 16; i++)
+                        for (int i = 0; i < codigos.Length; i++)
                         {
-                            memoria[posicion, i] = Int32.Parse(codigos[i]);
+                            if (col < 16)
+                            {
+                                memoria[fila, col] = Int32.Parse(codigos[i]);
+                                col++;
+                            }
+                            else
+                            {
+                                fila++;
+                                col = 0;
+                            }
                         }
-                        posicion++;
                     }
                 }
                 //int valor = Int32.Parse(contents);
                 //    data.Add(valor);
                 //    CD1.DataSource = data;
-                int a = 0; //Break Point por si quieren revisar la memoria
             }
             catch (IOException)
             {
             }
         }
 
-        public void pasarInstrMemoriaCache()
+        public void pasarInstrMemoriaCache(ref Procesador p)
         {
             int bloque = PC / 16;
             int posicionCache = bloque % 4;
@@ -145,17 +155,18 @@ namespace Proyecto_Arqui
                             i = 54;
                             break;
                     }
-                    if (Monitor.TryEnter(memoria))
+                    if (Monitor.TryEnter(p.memoria))
                     {
                         try
                         {
-                            for (int w = 0; w < 28; w++)
+                           /* for (int w = 0; w < 28; w++)
                             {
-                                sincronizacion.SignalAndWait();
-                            }
+                                //de caché a memoria = 28 ciclos
+                                //sincronizacion.SignalAndWait();
+                            }*/
                             while (lengthMemoria < 16)
                             {
-                                cacheInstrucciones[i] = memoria[bloque, lengthMemoria];
+                                cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
                                 lengthMemoria++;
                                 i++;
                             }
@@ -163,7 +174,7 @@ namespace Proyecto_Arqui
                         }
                         finally
                         {
-                            Monitor.Exit(memoria);
+                            Monitor.Exit(p.memoria);
                         }
                     }
                 }
@@ -174,80 +185,83 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void EjecutarInstrs(int dirHilillo, int quantum)
+        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Procesador p)
         {
-            bool termino = false;
-            quantumLocal = quantum;
-            contexto[32] = dirHilillo;
-            cargarContexto();
-            while (quantumLocal > 0)
+            //hay hilillos que correr?
+            while (p.direccionHilillo.Count > 0)
             {
-                int[] instruccion = buscarInstruccion();
-                PC += 4;
-                switch (instruccion[0])
+                quantumLocal = quantum;
+                int dirHilillo = p.direccionHilillo.Dequeue();
+                contexto[32] = dirHilillo;
+                cargarContexto();
+                while (quantumLocal > 0)
                 {
-                    case 2:     // JR
-                        PC = registros[instruccion[1]];
-                        break;
+                    int[] instruccion = buscarInstruccion(ref p);
+                    PC += 4;
+                    switch (instruccion[0])
+                    {
+                        case 2:     // JR
+                            PC = registros[instruccion[1]];
+                            break;
 
-                    case 3:     // JAL
-                        registros[31] = PC;
-                        PC += instruccion[3];
-                        break;
+                        case 3:     // JAL
+                            registros[31] = PC;
+                            PC += instruccion[3];
+                            break;
 
-                    case 4:     // BEQZ
-                        if (registros[instruccion[1]] == 0)
-                        {
-                            PC += instruccion[3] * 4;
-                        }
-                        break;
+                        case 4:     // BEQZ
+                            if (registros[instruccion[1]] == 0)
+                            {
+                                PC += instruccion[3] * 4;
+                            }
+                            break;
 
-                    case 5:     // BENZ
-                        if (registros[instruccion[1]] != 0)
-                        {
-                            PC += instruccion[3] * 4;
-                        }
-                        break;
+                        case 5:     // BENZ
+                            if (registros[instruccion[1]] != 0)
+                            {
+                                PC += instruccion[3] * 4;
+                            }
+                            break;
 
-                    case 8:     // DADDI
-                        registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
-                        break;
+                        case 8:     // DADDI
+                            registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
+                            break;
 
-                    case 12:    // DMUL
-                        registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
-                        break;
+                        case 12:    // DMUL
+                            registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
+                            break;
 
-                    case 14:    // DDIV
-                        registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
-                        break;
+                        case 14:    // DDIV
+                            registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
+                            break;
 
-                    case 32:    // DADD
-                        registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
-                        break;
+                        case 32:    // DADD
+                            registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
+                            break;
 
-                    case 34:    // DSUB
-                        registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
-                        break;
+                        case 34:    // DSUB
+                            registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
+                            break;
 
-                    case 35:    // LW
-                                // ejecutarLW(ref a, ref b, ref c, registros[R1] + R3, R2);
-                        break;
+                        case 35:    // LW
+                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            break;
 
-                    case 43:    // SW
-                                // ejecutarSW(ref a, ref b, ref c, registros[R1] + R3, R2);
-                        break;
+                        case 43:    // SW
+                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            break;
 
-                    case 63:    // Codigo para terminar el programa
-                                // hilillosTerminados++;
-                        termino = true;
-                        break;
+                        case 63:    // Codigo para terminar el programa
+                                    // hilillosTerminados++;
+                            p.direccionHilillo.Enqueue(PC);
+                            guardarContexto();
+                            break;
+                    }
+                    quantumLocal--;
+                    reloj++;
+                    imprimir(ref p);
+                    //sincronizacion.SignalAndWait();
                 }
-                quantumLocal--;
-            }
-            if (!termino) //Si se le acabo el quantum lo regreso a la cola
-            {
-                direccionHilillo.Enqueue(PC);
-                guardarContexto();
             }
         }
 
@@ -263,15 +277,17 @@ namespace Proyecto_Arqui
             bool datoEnMiCache = false;
 
             int datoEscribir = this.registros[numRegistro];
-            
-            if (Monitor.TryEnter(a.cacheDatos)) {
+
+            if (Monitor.TryEnter(a.cacheDatos))
+            {
                 try
                 {
                     //verificar si esta en la cache del procesador a
-                    if (a.cacheDatos[posEtiqueta] == bloque ) {    //si tiene el dato
+                    if (a.cacheDatos[posEtiqueta] == bloque)
+                    {    //si tiene el dato
                         if (a.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
                         {
-                            a.cacheDatos[posEstado] = -1; 
+                            a.cacheDatos[posEstado] = -1;
                         }
                         cantInvalidadas++;
                     }
@@ -286,7 +302,8 @@ namespace Proyecto_Arqui
                 try
                 {
                     //verificar si esta en la cache del procesador b
-                    if (b.cacheDatos[posEtiqueta] == bloque){    //si tiene el dato
+                    if (b.cacheDatos[posEtiqueta] == bloque)
+                    {    //si tiene el dato
                         if (b.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
                         {
                             b.cacheDatos[posEstado] = -1;
@@ -307,7 +324,8 @@ namespace Proyecto_Arqui
                 try
                 {
                     //verificar si esta en la cache del procesador b
-                    if (this.cacheDatos[posEtiqueta] == bloque) {    //si tiene el dato
+                    if (this.cacheDatos[posEtiqueta] == bloque)
+                    {    //si tiene el dato
                         if (this.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
                         {
                             this.cacheDatos[posEstado] = -1;
@@ -320,50 +338,28 @@ namespace Proyecto_Arqui
                     Monitor.Exit(this.cacheDatos);
                 }
             }
-                   
+
 
             //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
-            if (cantInvalidadas==2) {
-                if (datoEnMiCache) {
+            if (cantInvalidadas == 2)
+            {
+                if (datoEnMiCache)
+                {
                     //escribo en mi cache
                     this.cacheDatos[posicionC] = datoEscribir;
-                    this.cacheDatos[posEstado] = 1;  
+                    this.cacheDatos[posEstado] = 1;
                 }
                 //escribo en memoria
                 memoria[1, 2] = datoEscribir;
-
-
             }
 
-        }     
-
-
-        // lectura seria el bloque que desea leer
-        public void ejecutarLW(int direccionMemoria)
-        {
-            int bloque = calcularBloque(direccionMemoria);
-            int subirBloque = posicionCache(bloque);
-
-            if (bloque == cacheInstrucciones[subirBloque * 18 + 16] && cacheInstrucciones[subirBloque * 18 + 17] == 1)
-            {
-                //lectura en cache
-            }
-            else //traer bloque a memoria por fallo de cache
-            {
-                //bloquear Cache
-                //bloquear Bus
-                for (int k = 0; k < 16; k++)
-                {
-                    cacheInstrucciones[subirBloque * 18 + k] = memoria[bloque, k];
-                }
-            }
         }
 
         public void ejecutarLW(int direccionMemoria, int numeroRegistro)
         {
             int bloque = calcularBloque(direccionMemoria);          // Bloque en memoria donde esta el dato            
             int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
-            //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
+                                                                    //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
 
             if (Monitor.TryEnter(cacheDatos))
             {
@@ -379,11 +375,11 @@ namespace Proyecto_Arqui
                         //no esta en cache o esta invalido, lo traigo de memoria
                         if (Monitor.TryEnter(memoria))
                         {
-                     ca       try
+                            try
                             {
                                 for (int w = 0; w < 28; w++)
                                 {
-                                    //  Tarda 7 ciclos, se envían 7 señales
+                                    //  Tarda 28 ciclos, se envían 28 señales
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
@@ -405,6 +401,7 @@ namespace Proyecto_Arqui
                 }
             }
         }
+
         public int calcularBloque(int direccionMemoria)
         {
             int bloque = direccionMemoria / 16;
@@ -436,23 +433,24 @@ namespace Proyecto_Arqui
         }
 
         // Busca las instruccion a ejecutar en la cache de instrucciones
-        public int[] buscarInstruccion()
+        public int[] buscarInstruccion(ref Procesador p)
         {
-            int bloque = PC / 16;      // Para buscar en la etiqueta de la memoria caché
+            int bloque = PC / 16;
+            int pos = bloque % 4; // Para buscar en la etiqueta de la memoria caché
             int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
             int[] instruccion = new int[4];
             if (Monitor.TryEnter(cacheInstrucciones))
             {
                 try
                 {
-                    if (cacheInstrucciones[bloque * 18 + 16] != bloque)    // Hay fallo de cache?
+                    if (cacheInstrucciones[pos * 18 + 16] != bloque)    // Hay fallo de cache?
                     {
-                        pasarInstrMemoriaCache();
+                        pasarInstrMemoriaCache(ref p);
                     }
 
                     for (int i = 0; i < 4; i++, desplazamiento++)
                     {
-                        instruccion[i] = cacheInstrucciones[bloque * 18 + desplazamiento];
+                        instruccion[i] = cacheInstrucciones[pos * 18 + desplazamiento];
                     }
                 }
                 finally
@@ -466,6 +464,21 @@ namespace Proyecto_Arqui
                 //libero
             }
             return instruccion;
+        }
+
+        public void imprimir(ref Procesador p)
+        {
+            BindingList<int> data = new BindingList<int>();
+            for(int i = 0; i < 32; i++)
+            {
+                data.Add(registros[i]);               
+            }
+            CD1.DataSource = data;
+        }
+
+        private void P1_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }

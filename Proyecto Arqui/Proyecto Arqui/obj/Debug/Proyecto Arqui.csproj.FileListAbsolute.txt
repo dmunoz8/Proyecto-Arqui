@@ -1,0 +1,22 @@
+C:\Users\angel\Source\Repos\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.pdb
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csprojResolveAssemblyReference.cache
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Datos.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Procesador.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Properties.Resources.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csproj.GenerateResource.Cache
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.exe
+C:\Users\Marco\Downloads\Arqui\Proyecto\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.pdb
+C:\Users\Jeffry\Documents\Visual Studio 2015\Projects\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe.config
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.exe
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\bin\Debug\Proyecto Arqui.pdb
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Datos.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Procesador.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto_Arqui.Properties.Resources.resources
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csproj.GenerateResource.Cache
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.exe
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.pdb
+C:\Users\Marco\Downloads\Arqui\Proyecto-Arqui\Proyecto Arqui\Proyecto Arqui\obj\Debug\Proyecto Arqui.csprojResolveAssemblyReference.cache

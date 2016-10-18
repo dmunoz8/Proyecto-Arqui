@@ -135,6 +135,7 @@
             this.Controls.Add(this.label1);
             this.Name = "Datos";
             this.Text = "Ingreso de Datos";
+            this.Load += new System.EventHandler(this.Datos_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
