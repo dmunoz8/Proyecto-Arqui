@@ -271,8 +271,13 @@ namespace Proyecto_Arqui
             int posicionC = posicionCache(bloque);
             int cantInvalidadas = 0;
 
+            //posiciones de la cache
             int posEtiqueta = 0;
             int posEstado = 0;
+
+            //posiciones n y m de la memoria
+            int pos_1;
+            int pos_2;
 
             bool datoEnMiCache = false;
 
@@ -341,6 +346,9 @@ namespace Proyecto_Arqui
 
 
             //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+
+            //si el dato esta en mi cache lo escribo ahi y en memoria
+            //si no esta en mi cache solo escribo en memoria
             if (cantInvalidadas == 2)
             {
                 if (datoEnMiCache)
@@ -350,7 +358,24 @@ namespace Proyecto_Arqui
                     this.cacheDatos[posEstado] = 1;
                 }
                 //escribo en memoria
-                memoria[1, 2] = datoEscribir;
+                if (Monitor.TryEnter(memoria))
+                {
+                    try
+                    {
+                        for (int w = 0; w < 7; w++)
+                        {
+                            //  Tarda 7 ciclos, se envían 7 señales
+                            sincronizacion.SignalAndWait();
+                        }
+                        memoria[pos_1, pos_2] = datoEscribir;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(memoria);
+                    }
+                }
+
+               
             }
 
         }
