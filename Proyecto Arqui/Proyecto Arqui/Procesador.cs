@@ -54,7 +54,7 @@ namespace Proyecto_Arqui
         public void inicializarProcesador()
         {
             registros = new int[32];
-            contexto = new int[32];
+            contexto = new int[33];
             cacheInstrucciones = new int[72];
             cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
 
@@ -63,6 +63,8 @@ namespace Proyecto_Arqui
                 registros[i] = 0;
                 contexto[i] = 0;
             }
+
+            contexto[32] = 0;
 
             for (int i = 0; i < 72; i++)
             {
@@ -119,7 +121,7 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void pasarInstrMemoriaCache()
+        public void pasarInstrMemoriaCache(ref Procesador p)
         {
             int bloque = PC / 16;
             int posicionCache = bloque % 4;
@@ -147,7 +149,7 @@ namespace Proyecto_Arqui
                             i = 54;
                             break;
                     }
-                    if (Monitor.TryEnter(memoria))
+                    if (Monitor.TryEnter(p.memoria))
                     {
                         try
                         {
@@ -158,7 +160,7 @@ namespace Proyecto_Arqui
                             }
                             while (lengthMemoria < 16)
                             {
-                                cacheInstrucciones[i] = memoria[bloque, lengthMemoria];
+                                cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
                                 lengthMemoria++;
                                 i++;
                             }
@@ -166,7 +168,7 @@ namespace Proyecto_Arqui
                         }
                         finally
                         {
-                            Monitor.Exit(memoria);
+                            Monitor.Exit(p.memoria);
                         }
                     }
                 }
@@ -177,18 +179,18 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c)
+        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Procesador p)
         {
             //hay hilillos que correr?
-            while (direccionHilillo.Count > 0)
+            while (p.direccionHilillo.Count > 0)
             {
                 quantumLocal = quantum;
-                int dirHilillo = direccionHilillo.Dequeue();
+                int dirHilillo = p.direccionHilillo.Dequeue();
                 contexto[32] = dirHilillo;
                 cargarContexto();
                 while (quantumLocal > 0)
                 {
-                    int[] instruccion = buscarInstruccion();
+                    int[] instruccion = buscarInstruccion(ref p);
                     PC += 4;
                     switch (instruccion[0])
                     {
@@ -236,7 +238,7 @@ namespace Proyecto_Arqui
                             break;
 
                         case 35:    // LW
-                            ejecutarLW(ref registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2]);
                             break;
 
                         case 43:    // SW
@@ -245,11 +247,12 @@ namespace Proyecto_Arqui
 
                         case 63:    // Codigo para terminar el programa
                                     // hilillosTerminados++;
-                            direccionHilillo.Enqueue(PC);
+                            p.direccionHilillo.Enqueue(PC);
                             guardarContexto();
                             break;
                     }
                     quantumLocal--;
+                    reloj++;
                     sincronizacion.SignalAndWait();
                 }
             }
@@ -423,7 +426,7 @@ namespace Proyecto_Arqui
         }
 
         // Busca las instruccion a ejecutar en la cache de instrucciones
-        public int[] buscarInstruccion()
+        public int[] buscarInstruccion(ref Procesador p)
         {
             int bloque = PC / 16;      // Para buscar en la etiqueta de la memoria caché
             int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
@@ -434,7 +437,7 @@ namespace Proyecto_Arqui
                 {
                     if (cacheInstrucciones[bloque * 18 + 16] != bloque)    // Hay fallo de cache?
                     {
-                        pasarInstrMemoriaCache();
+                        pasarInstrMemoriaCache(ref p);
                     }
 
                     for (int i = 0; i < 4; i++, desplazamiento++)
@@ -453,6 +456,11 @@ namespace Proyecto_Arqui
                 //libero
             }
             return instruccion;
+        }
+
+        private void P1_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -39,12 +39,13 @@ namespace Proyecto_Arqui
             principal.Visible = true;
             principal.cargarInstrucciones(path);
         }
+
         //Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores
         private void inicializaProcesadores()
         {
-            Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
-            Thread hilo_proc2 = new Thread(delegate () { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
-            Thread hilo_proc3 = new Thread(delegate () { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3); });
+            Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
+            Thread hilo_proc2 = new Thread(delegate() { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
+            Thread hilo_proc3 = new Thread(delegate() { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
 
             hilo_proc1.Start();
             hilo_proc2.Start();

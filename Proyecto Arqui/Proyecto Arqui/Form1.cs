@@ -82,5 +82,10 @@ namespace Proyecto_Arqui
         {
 
         }
+
+        private void Datos_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
