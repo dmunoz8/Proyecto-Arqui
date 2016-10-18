@@ -14,13 +14,11 @@ namespace Proyecto_Arqui
 {
     public partial class Procesador : Form
     {
-        public int[,] memoria; //64*16 = 1024 bytes
         public int[] registros; //32 (R0 - R31)
         public int[] contexto; //33 (R0 - R31 + PC) . 34 si se agrega RL
         public int[] cacheDatos; // 4 bloques de una palabra
         public int[] cacheInstrucciones; // 4 bloques de 4 palabras
         public Queue<int> hilillos;
-        public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         public Barrier sincronizacion;
         public int quantumLocal;
         public int reloj;
@@ -36,19 +34,7 @@ namespace Proyecto_Arqui
             this.sincronizacion = sincronizacion;
         }
 
-        //solo para el procesador principal que va a tener la memoria 
-        public void inicializarProcesadorPrincipal()
-        {
-            memoria = new int[64, 16];
-            for (int i = 0; i < 64; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                {
-                    memoria[i, j] = 1;
-                }
-            }
-            direccionHilillo = new Queue<int>();
-        }
+
 
         //inicializador de registros y caches de datos de los tres procesadores 
         public void inicializarProcesador()
@@ -86,48 +72,7 @@ namespace Proyecto_Arqui
             cacheDatos[11] = -1;
         }
 
-        //el procesador principal carga instrucciones de los txt a memoria principal
-        public void cargarInstrucciones(string path)
-        {
-            //BindingList<int> data = new BindingList<int>();
-            try
-            {
-                int fila = 24;
-                int col = 0;
-                foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
-                {
-                    string contents = File.ReadAllText(files);
-                    string[] instrucciones = contents.Split('\n');
-                    foreach (string instruccion in instrucciones)
-                    {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila*16);
-
-                        string[] codigos = instruccion.Split(' ');
-                        for (int i = 0; i < codigos.Length; i++)
-                        {
-                            if (col < 16)
-                            {
-                                memoria[fila, col] = Int32.Parse(codigos[i]);
-                                col++;
-                            }
-                            else
-                            {
-                                fila++;
-                                col = 0;
-                            }
-                        }
-                    }
-                }
-                //int valor = Int32.Parse(contents);
-                //    data.Add(valor);
-                //    CD1.DataSource = data;
-            }
-            catch (IOException)
-            {
-            }
-        }
-
-        public void pasarInstrMemoriaCache(ref Procesador p)
+        public void pasarInstrMemoriaCache(ref Organizador p)
         {
             int bloque = PC / 16;
             int posicionCache = bloque % 4;
@@ -192,7 +137,7 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Procesador p)
+        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, Organizador p)
         {
             //hay hilillos que correr?
             while (p.direccionHilillo.Count > 0)
@@ -251,11 +196,11 @@ namespace Proyecto_Arqui
                             break;
 
                         case 35:    // LW
-                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                             break;
 
                         case 43:    // SW
-                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                             break;
 
                         case 63:    // Codigo para terminar el programa
@@ -270,13 +215,13 @@ namespace Proyecto_Arqui
                     sincronizacion.SignalAndWait();  
                     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     reloj++;
-                    imprimir(ref p);
+                    //imprimir(ref p);
                     //sincronizacion.SignalAndWait();
                 }
             }
         }
 
-        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro)
+        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro, ref Organizador p)
         {
             int bloque = calcularBloque(dirMem);
             int posicionC = posicionCache(bloque);
@@ -369,7 +314,7 @@ namespace Proyecto_Arqui
                     this.cacheDatos[posEstado] = 1;
                 }
                 //escribo en memoria
-                if (Monitor.TryEnter(memoria))
+                if (Monitor.TryEnter(p.memoria))
                 {
                     try
                     {
@@ -378,11 +323,11 @@ namespace Proyecto_Arqui
                             //  Tarda 7 ciclos, se envían 7 señales
                             sincronizacion.SignalAndWait();
                         }
-                        memoria[pos_1, pos_2] = datoEscribir;
+                        //memoria[pos_1, pos_2] = datoEscribir;
                     }
                     finally
                     {
-                        Monitor.Exit(memoria);
+                        Monitor.Exit(p.memoria);
                     }
                 }
 
@@ -391,7 +336,7 @@ namespace Proyecto_Arqui
 
         }
 
-        public void ejecutarLW(int direccionMemoria, int numeroRegistro)
+        public void ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
         {
             int bloque = calcularBloque(direccionMemoria);          // Bloque en memoria donde esta el dato            
             int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
@@ -409,7 +354,7 @@ namespace Proyecto_Arqui
                     else
                     {
                         //no esta en cache o esta invalido, lo traigo de memoria
-                        if (Monitor.TryEnter(memoria))
+                        if (Monitor.TryEnter(p.memoria))
                         {
                             try
                             {
@@ -419,14 +364,14 @@ namespace Proyecto_Arqui
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
-                                cacheDatos[posicionC * 3] = memoria[bloque, 0]; //REVISAR ESTA POSICION
+                                cacheDatos[posicionC * 3] = p.memoria[bloque, 0]; //REVISAR ESTA POSICION
                                 cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 3];
                             }
                             finally
                             {
-                                Monitor.Exit(memoria);
+                                Monitor.Exit(p.memoria);
                             }
                         }
                         else
@@ -477,7 +422,7 @@ namespace Proyecto_Arqui
         }
 
         // Busca las instruccion a ejecutar en la cache de instrucciones
-        public int[] buscarInstruccion(ref Procesador p)
+        public int[] buscarInstruccion(ref Organizador p)
         {
             int bloque = PC / 16;
             int pos = bloque % 4; // Para buscar en la etiqueta de la memoria caché

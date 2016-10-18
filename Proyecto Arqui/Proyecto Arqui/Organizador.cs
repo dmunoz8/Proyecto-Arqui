@@ -1,14 +1,24 @@
 ﻿using System;
 using System.Threading;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
 
 namespace Proyecto_Arqui
 {
     public class Organizador
     {
+        public int[,] memoria; //64*16 = 1024 bytes
+        public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         int _CANTHILILLOS;
         int _QUANTUM;
         int reloj;
-        Procesador principal;
         Procesador procesador1;
         Procesador procesador2;
         Procesador procesador3;
@@ -19,7 +29,7 @@ namespace Proyecto_Arqui
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
             reloj = 0;
-            sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
+            sincronizacion = new Barrier(3); //barrera para los tres procesadores y procesador principal
 
             procesador1 = new Procesador(1, sincronizacion);
             procesador2 = new Procesador(2, sincronizacion);
@@ -36,18 +46,16 @@ namespace Proyecto_Arqui
         //el procesador principal carga en memoria las instrucciones contenidas en los txt
         public void cargarMemoria(string path)
         {
-            principal = new Procesador();
-            principal.inicializarProcesadorPrincipal();
-            principal.Visible = true;
-            principal.cargarInstrucciones(path);
+            inicializarProcesadorPrincipal();
+            cargarInstrucciones(path);
         }
 
         //Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores
         private void inicializaProcesadores()
         {
-            Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
-            Thread hilo_proc2 = new Thread(delegate() { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
-            Thread hilo_proc3 = new Thread(delegate() { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, ref principal); });
+            Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, this); });
+            Thread hilo_proc2 = new Thread(delegate() { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, this); });
+            Thread hilo_proc3 = new Thread(delegate() { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, this); });
 
             hilo_proc1.Start();
             hilo_proc2.Start();
@@ -104,6 +112,62 @@ namespace Proyecto_Arqui
                 //Console.WriteLine(reloj);
             }
         }
+
+        //solo para el procesador principal que va a tener la memoria 
+        public void inicializarProcesadorPrincipal()
+        {
+            memoria = new int[64, 16];
+            for (int i = 0; i < 64; i++)
+            {
+                for (int j = 0; j < 16; j++)
+                {
+                    memoria[i, j] = 1;
+                }
+            }
+            direccionHilillo = new Queue<int>();
+        }
+
+        //el procesador principal carga instrucciones de los txt a memoria principal
+        public void cargarInstrucciones(string path)
+        {
+            //BindingList<int> data = new BindingList<int>();
+            try
+            {
+                int fila = 24;
+                int col = 0;
+                foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
+                {
+                    string contents = File.ReadAllText(files);
+                    string[] instrucciones = contents.Split('\n');
+                    foreach (string instruccion in instrucciones)
+                    {
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16);
+
+                        string[] codigos = instruccion.Split(' ');
+                        for (int i = 0; i < codigos.Length; i++)
+                        {
+                            if (col < 16)
+                            {
+                                memoria[fila, col] = Int32.Parse(codigos[i]);
+                                col++;
+                            }
+                            else
+                            {
+                                fila++;
+                                col = 0;
+                            }
+                        }
+                    }
+                }
+                //int valor = Int32.Parse(contents);
+                //    data.Add(valor);
+                //    CD1.DataSource = data;
+            }
+            catch (IOException)
+            {
+            }
+        }
+
         public void imprimirDatos()
         {
 
