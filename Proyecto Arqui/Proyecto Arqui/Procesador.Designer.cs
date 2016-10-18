@@ -189,17 +189,17 @@
         #endregion
 
         private System.Windows.Forms.GroupBox P1;
-        private System.Windows.Forms.ListBox CD1;
         private System.Windows.Forms.Label R1;
         private System.Windows.Forms.Label ID1;
         private System.Windows.Forms.GroupBox P2;
-        private System.Windows.Forms.ListBox CD2;
         private System.Windows.Forms.Label R2;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.GroupBox P3;
-        private System.Windows.Forms.ListBox CD3;
         private System.Windows.Forms.Label R3;
         private System.Windows.Forms.Label ID3;
+        public System.Windows.Forms.ListBox CD1;
+        public System.Windows.Forms.ListBox CD2;
+        public System.Windows.Forms.ListBox CD3;
 
     }
 }

@@ -29,7 +29,7 @@ namespace Proyecto_Arqui
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
             reloj = 0;
-            sincronizacion = new Barrier(3); //barrera para los tres procesadores y procesador principal
+            sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
             procesador1 = new Procesador(1, sincronizacion);
             procesador2 = new Procesador(2, sincronizacion);
@@ -61,6 +61,18 @@ namespace Proyecto_Arqui
             hilo_proc2.Start();
             hilo_proc3.Start();
 
+            /*  //despliega informacion 
+            Procesador principal = new Procesador();
+            principal.Visible = true;
+
+            BindingList<string> data = new BindingList<string>();
+            for(int i = 0; i < 32; i ++)
+            {
+                data.Add("R" + i + ":" + procesador1.registros[i]);
+            }
+            principal.CD1.DataSource = data;
+            */
+              
             sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
         }
 
@@ -141,7 +153,7 @@ namespace Proyecto_Arqui
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16);
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16); //Esto solo sirve si cada hilillo tiene 4 o mas instrucciones
 
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < codigos.Length; i++)
