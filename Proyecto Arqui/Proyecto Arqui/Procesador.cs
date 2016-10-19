@@ -16,7 +16,7 @@ namespace Proyecto_Arqui
     {
         public int[,] memoria; //64*16 = 1024 bytes
         public int[] registros; //32 (R0 - R31)
-        public int[] contexto; //33 (R0 - R31 + PC) . 34 si se agrega RL
+        public int[] contexto; //36 R0-R31, PC, PR relojInicio, relojFin 
         public int[] cacheDatos; // 4 bloques de una palabra
         public int[] cacheInstrucciones; // 4 bloques de 4 palabras
         public Queue<int> hilillos;
@@ -26,6 +26,8 @@ namespace Proyecto_Arqui
         public int reloj;
         public int RL;
         public int PC;
+        public int relojInicio;
+        public int relojFin;
 
         public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
@@ -54,7 +56,7 @@ namespace Proyecto_Arqui
         public void inicializarProcesador()
         {
             registros = new int[32];
-            contexto = new int[33];
+            contexto = new int[36];
             cacheInstrucciones = new int[72];
             cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
 
@@ -192,6 +194,7 @@ namespace Proyecto_Arqui
                 quantumLocal = quantum;
                 int dirHilillo = p.direccionHilillo.Dequeue();
                 contexto[32] = dirHilillo;
+
                 cargarContexto();
                 while (quantumLocal > 0)
                 {
@@ -442,13 +445,17 @@ namespace Proyecto_Arqui
             return direccionMemoria % 16;
         }
 
-        private void cargarContexto()
+        private void cargarContexto(int [] contextoCargar)
         {
+           
             for (int i = 0; i < 32; i++)
             {
-                registros[i] = contexto[i];
+                contexto[i] = contextoCargar[i];
             }
             PC = contexto[32];
+            RL = contexto[33];
+            //falta inicio y fin del reloj
+
         }
 
         private void guardarContexto()
@@ -458,6 +465,11 @@ namespace Proyecto_Arqui
                 contexto[i] = registros[i];
             }
             contexto[32] = PC;
+            contexto[33] = RL;
+           // contexto[34] = reloj;
+
+            
+
         }
 
         // Busca las instruccion a ejecutar en la cache de instrucciones
