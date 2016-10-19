@@ -59,9 +59,12 @@ namespace Proyecto_Arqui
 
             _hilos = Int32.Parse(hilos.Text);
             _quantum = Int32.Parse(quantum.Text);
-            Organizador organizador = new Organizador(_hilos,_quantum, path);
 
             this.Visible = false;
+            this.Close();
+
+            Organizador organizador = new Organizador(_hilos,_quantum, path);
+
 
             /*Procesador MIPS = new Procesador();
              this.Visible = false;

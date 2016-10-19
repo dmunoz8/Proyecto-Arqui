@@ -100,7 +100,7 @@ namespace Proyecto_Arqui
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila*16);
+                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16);
 
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < codigos.Length; i++)
@@ -129,15 +129,15 @@ namespace Proyecto_Arqui
 
         public void pasarInstrMemoriaCache(ref Procesador p)
         {
-            int bloque = PC / 16;
-            int posicionCache = bloque % 4;
+            int bloque = calcularBloque(PC);
+            int posicionC = posicionCache(bloque);
             int lengthMemoria = 0;
             int i = -1;
             if (Monitor.TryEnter(cacheInstrucciones))
             {
                 try
                 {
-                    switch (posicionCache)
+                    switch (posicionC)
                     {
                         case 0:
                             i = 0;
@@ -159,18 +159,17 @@ namespace Proyecto_Arqui
                     {
                         try
                         {
-                           /* for (int w = 0; w < 28; w++)
-                            {
-                                //de caché a memoria = 28 ciclos
-                                //sincronizacion.SignalAndWait();
-                            }*/
+                            /* for (int w = 0; w < 28; w++)
+                             {
+                                 //de caché a memoria = 28 ciclos
+                                 //sincronizacion.SignalAndWait();
+                             }*/
                             while (lengthMemoria < 16)
                             {
                                 cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
                                 lengthMemoria++;
                                 i++;
                             }
-                            PC += 4;
                         }
                         finally
                         {
@@ -252,15 +251,18 @@ namespace Proyecto_Arqui
                             break;
 
                         case 63:    // Codigo para terminar el programa
-                                    // hilillosTerminados++;
                             p.direccionHilillo.Enqueue(PC);
                             guardarContexto();
                             break;
                     }
                     quantumLocal--;
-                    reloj++;
+                    //reloj++;
+                    //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
+                    //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
+                    sincronizacion.SignalAndWait();
+                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    //reloj++;
                     imprimir(ref p);
-                    //sincronizacion.SignalAndWait();
                 }
             }
         }
@@ -268,16 +270,13 @@ namespace Proyecto_Arqui
         private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro)
         {
             int bloque = calcularBloque(dirMem);
+            int palabra = calcularPalabra(dirMem);
             int posicionC = posicionCache(bloque);
             int cantInvalidadas = 0;
 
             //posiciones de la cache
             int posEtiqueta = 0;
             int posEstado = 0;
-
-            //posiciones n y m de la memoria
-            int pos_1;
-            int pos_2;
 
             bool datoEnMiCache = false;
 
@@ -296,93 +295,87 @@ namespace Proyecto_Arqui
                         }
                         cantInvalidadas++;
                     }
+
+                    if (Monitor.TryEnter(b.cacheDatos))
+                    {
+                        try
+                        {
+                            //verificar si esta en la cache del procesador b
+                            if (b.cacheDatos[posEtiqueta] == bloque)
+                            {    //si tiene el dato
+                                if (b.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                                {
+                                    b.cacheDatos[posEstado] = -1;
+                                }
+                                cantInvalidadas++;
+                            }
+                            //verificar si lo tengo en mi cahe e invalidarlo
+                            if (Monitor.TryEnter(cacheDatos))
+                            {
+                                try
+                                {
+                                    //verificar si esta en mi cache
+                                    if (cacheDatos[posEtiqueta] == bloque)
+                                    {    //si tiene el dato
+                                        if (cacheDatos[posEstado] == 1)   //si esta valido, lo invalido
+                                        {
+                                            cacheDatos[posEstado] = -1;
+                                        }
+                                        datoEnMiCache = true;
+                                    }
+                                    //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+                                    //si el dato esta en mi cache lo escribo ahi y en memoria
+                                    //si no esta en mi cache solo escribo en memoria
+                                    if (cantInvalidadas == 2)
+                                    {
+                                        if (datoEnMiCache)
+                                        {
+                                            //escribo en mi cache
+                                            cacheDatos[posicionC] = datoEscribir;
+                                            cacheDatos[posEstado] = 1;
+                                        }
+                                        //escribo en memoria
+                                        if (Monitor.TryEnter(memoria))
+                                        {
+                                            try
+                                            {
+                                                for (int w = 0; w < 7; w++)
+                                                {
+                                                    //  Tarda 7 ciclos, se envían 7 señales
+                                                    sincronizacion.SignalAndWait();
+                                                }
+                                                memoria[bloque, palabra] = datoEscribir;
+                                            }
+                                            finally
+                                            {
+                                                Monitor.Exit(memoria);
+                                            }
+                                        }
+                                    }
+                                }
+                                finally
+                                {
+                                    Monitor.Exit(cacheDatos);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            Monitor.Exit(b.cacheDatos);
+                        }
+                    }
                 }
                 finally
                 {
                     Monitor.Exit(a.cacheDatos);
                 }
             }
-            if (Monitor.TryEnter(b.cacheDatos))
-            {
-                try
-                {
-                    //verificar si esta en la cache del procesador b
-                    if (b.cacheDatos[posEtiqueta] == bloque)
-                    {    //si tiene el dato
-                        if (b.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
-                        {
-                            b.cacheDatos[posEstado] = -1;
-                        }
-                        cantInvalidadas++;
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(b.cacheDatos);
-                }
-            }
-
-
-            //verificar si lo tengo en mi cahe e invalidarlo
-            if (Monitor.TryEnter(this.cacheDatos))
-            {
-                try
-                {
-                    //verificar si esta en la cache del procesador b
-                    if (this.cacheDatos[posEtiqueta] == bloque)
-                    {    //si tiene el dato
-                        if (this.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
-                        {
-                            this.cacheDatos[posEstado] = -1;
-                        }
-                        datoEnMiCache = true;
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(this.cacheDatos);
-                }
-            }
-
-
-            //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
-
-            //si el dato esta en mi cache lo escribo ahi y en memoria
-            //si no esta en mi cache solo escribo en memoria
-            if (cantInvalidadas == 2)
-            {
-                if (datoEnMiCache)
-                {
-                    //escribo en mi cache
-                    this.cacheDatos[posicionC] = datoEscribir;
-                    this.cacheDatos[posEstado] = 1;
-                }
-                //escribo en memoria
-                if (Monitor.TryEnter(memoria))
-                {
-                    try
-                    {
-                        for (int w = 0; w < 7; w++)
-                        {
-                            //  Tarda 7 ciclos, se envían 7 señales
-                            sincronizacion.SignalAndWait();
-                        }
-                        memoria[pos_1, pos_2] = datoEscribir;
-                    }
-                    finally
-                    {
-                        Monitor.Exit(memoria);
-                    }
-                }
-
-               
-            }
-
         }
 
         public void ejecutarLW(int direccionMemoria, int numeroRegistro)
         {
-            int bloque = calcularBloque(direccionMemoria);          // Bloque en memoria donde esta el dato            
+            int palabra = calcularPalabra(direccionMemoria);
+            int bloque = calcularBloque(direccionMemoria);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
                                                                     //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
 
@@ -408,7 +401,7 @@ namespace Proyecto_Arqui
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
-                                cacheDatos[posicionC * 3] = memoria[bloque, 0]; //REVISAR ESTA POSICION
+                                cacheDatos[posicionC * 3] = memoria[bloque, palabra];
                                 cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 3];
@@ -439,6 +432,16 @@ namespace Proyecto_Arqui
             return posCache;
         }
 
+        /// <summary>
+        /// A partir de la direccion de memoria calcular la palabra en el bloque de memoria.
+        /// </summary>
+        /// <param name="direccionMemoria">Direccion en la memoria principal</param>
+        /// <returns></returns>
+        public int calcularPalabra(int direccionMemoria)
+        {
+            return direccionMemoria % 16;
+        }
+
         private void cargarContexto()
         {
             for (int i = 0; i < 32; i++)
@@ -460,8 +463,8 @@ namespace Proyecto_Arqui
         // Busca las instruccion a ejecutar en la cache de instrucciones
         public int[] buscarInstruccion(ref Procesador p)
         {
-            int bloque = PC / 16;
-            int pos = bloque % 4; // Para buscar en la etiqueta de la memoria caché
+            int bloque = calcularBloque(PC);
+            int pos = posicionCache(bloque); // Para buscar en la etiqueta de la memoria caché
             int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
             int[] instruccion = new int[4];
             if (Monitor.TryEnter(cacheInstrucciones))
@@ -494,9 +497,9 @@ namespace Proyecto_Arqui
         public void imprimir(ref Procesador p)
         {
             BindingList<int> data = new BindingList<int>();
-            for(int i = 0; i < 32; i++)
+            for (int i = 0; i < 32; i++)
             {
-                data.Add(registros[i]);               
+                data.Add(registros[i]);
             }
             CD1.DataSource = data;
         }
