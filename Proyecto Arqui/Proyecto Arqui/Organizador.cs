@@ -139,6 +139,7 @@ namespace Proyecto_Arqui
                 }
             }
             direccionHilillo = new Queue<int>();
+            colaContexto = new Queue<int[]>();
         }
 
         //el procesador principal carga instrucciones de los txt a memoria principal
@@ -155,7 +156,12 @@ namespace Proyecto_Arqui
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)
                     {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16); //Esto solo sirve si cada hilillo tiene 4 o mas instrucciones
+                        if (instruccion == instrucciones.First())
+                        {
+                            direccionHilillo.Enqueue(fila * 16); //Esto solo sirve si cada hilillo tiene 4 o mas instrucciones
+
+                            llenarCola(fila * 16);
+                        }
 
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < codigos.Length; i++)
@@ -180,6 +186,17 @@ namespace Proyecto_Arqui
             catch (IOException)
             {
             }
+        }
+
+        public void llenarCola(int pc)
+        {
+            int[] a = new int[36];
+            for(int i = 0; i < 35; i++)
+            {
+                a[i] = 0;
+            }
+            a[32] = pc; //32 es el PC
+            colaContexto.Enqueue(a);
         }
 
         public void imprimirDatos()

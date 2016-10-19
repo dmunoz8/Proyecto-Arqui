@@ -14,13 +14,11 @@ namespace Proyecto_Arqui
 {
     public partial class Procesador : Form
     {
-        public int[,] memoria; //64*16 = 1024 bytes
         public int[] registros; //32 (R0 - R31)
         public int[] contexto; //36 R0-R31, PC, PR relojInicio, relojFin 
         public int[] cacheDatos; // 4 bloques de una palabra
         public int[] cacheInstrucciones; // 4 bloques de 4 palabras
         public Queue<int> hilillos;
-        public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         public Barrier sincronizacion;
         public int quantumLocal;
         public int reloj;
@@ -36,20 +34,6 @@ namespace Proyecto_Arqui
             reloj = 0;
             PC = 0;
             this.sincronizacion = sincronizacion;
-        }
-
-        //solo para el procesador principal que va a tener la memoria 
-        public void inicializarProcesadorPrincipal()
-        {
-            memoria = new int[64, 16];
-            for (int i = 0; i < 64; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                {
-                    memoria[i, j] = 1;
-                }
-            }
-            direccionHilillo = new Queue<int>();
         }
 
         //inicializador de registros y caches de datos de los tres procesadores 
@@ -88,48 +72,7 @@ namespace Proyecto_Arqui
             cacheDatos[11] = -1;
         }
 
-        //el procesador principal carga instrucciones de los txt a memoria principal
-        public void cargarInstrucciones(string path)
-        {
-            //BindingList<int> data = new BindingList<int>();
-            try
-            {
-                int fila = 24;
-                int col = 0;
-                foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
-                {
-                    string contents = File.ReadAllText(files);
-                    string[] instrucciones = contents.Split('\n');
-                    foreach (string instruccion in instrucciones)
-                    {
-                        if (instruccion == instrucciones.First()) direccionHilillo.Enqueue(fila * 16);
-
-                        string[] codigos = instruccion.Split(' ');
-                        for (int i = 0; i < codigos.Length; i++)
-                        {
-                            if (col < 16)
-                            {
-                                memoria[fila, col] = Int32.Parse(codigos[i]);
-                                col++;
-                            }
-                            else
-                            {
-                                fila++;
-                                col = 0;
-                            }
-                        }
-                    }
-                }
-                //int valor = Int32.Parse(contents);
-                //    data.Add(valor);
-                //    CD1.DataSource = data;
-            }
-            catch (IOException)
-            {
-            }
-        }
-
-        public void pasarInstrMemoriaCache(ref Procesador p)
+        public void pasarInstrMemoriaCache(ref Organizador p)
         {
             int bloque = calcularBloque(PC);
             int posicionC = posicionCache(bloque);
@@ -186,18 +129,20 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Organizador p)
+        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, Organizador p)
         {
+            int[] instruccion = new int[4];
+            int fin = -1;
             //hay hilillos que correr?
-            while (p.direccionHilillo.Count > 0)
+            while (p.colaContexto.Count > 0)
             {
                 quantumLocal = quantum;
-                int dirHilillo = p.direccionHilillo.Dequeue();
-                contexto[32] = dirHilillo;
+                //int dirHilillo = p.direccionHilillo.Dequeue();
+                //contexto[32] = dirHilillo;
                 cargarContexto(p.colaContexto.Dequeue());//saca un contexto de la cola
-                while (quantumLocal > 0)
+                while (quantumLocal > 0 && fin != 63)
                 {
-                    int[] instruccion = buscarInstruccion(ref p);
+                    instruccion = buscarInstruccion(ref p);
                     PC += 4;
                     switch (instruccion[0])
                     {
@@ -245,17 +190,18 @@ namespace Proyecto_Arqui
                             break;
 
                         case 35:    // LW
-                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                             break;
 
                         case 43:    // SW
-                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2]);
+                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                             break;
 
                         case 63:    // Codigo para terminar el programa
-                            p.direccionHilillo.Enqueue(PC);
-                            int [] contextoGuardar=guardarContexto();
-                            p.colaContexto.Enqueue(contextoGuardar);//mete el contexto a la cola
+                            //p.direccionHilillo.Enqueue(PC);
+                            //int [] contextoGuardar=guardarContexto();
+                            //p.colaContexto.Enqueue(contextoGuardar);//mete el contexto a la cola
+                            fin = 63;
                             break;
                     }
                     quantumLocal--;
@@ -265,12 +211,18 @@ namespace Proyecto_Arqui
                     sincronizacion.SignalAndWait();
                     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     //reloj++;
-                    imprimir(ref p);
+                    //imprimir(ref p);
+                }
+
+                if (fin != 63)
+                {
+                    int[] contextoGuardar1 = guardarContexto();
+                    p.colaContexto.Enqueue(contextoGuardar1);
                 }
             }
         }
 
-        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro)
+        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro, ref Organizador p)
         {
             int bloque = calcularBloque(dirMem);
             int palabra = calcularPalabra(dirMem);
@@ -338,7 +290,7 @@ namespace Proyecto_Arqui
                                             cacheDatos[posEstado] = 1;
                                         }
                                         //escribo en memoria
-                                        if (Monitor.TryEnter(memoria))
+                                        if (Monitor.TryEnter(p.memoria))
                                         {
                                             try
                                             {
@@ -347,11 +299,11 @@ namespace Proyecto_Arqui
                                                     //  Tarda 7 ciclos, se envían 7 señales
                                                     sincronizacion.SignalAndWait();
                                                 }
-                                                memoria[bloque, palabra] = datoEscribir;
+                                                p.memoria[bloque, palabra] = datoEscribir;
                                             }
                                             finally
                                             {
-                                                Monitor.Exit(memoria);
+                                                Monitor.Exit(p.memoria);
                                             }
                                         }
                                     }
@@ -375,7 +327,7 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void ejecutarLW(int direccionMemoria, int numeroRegistro)
+        public void ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
         {
             int palabra = calcularPalabra(direccionMemoria);
             int bloque = calcularBloque(direccionMemoria);          // Bloque en caché donde esta el dato            
@@ -394,7 +346,7 @@ namespace Proyecto_Arqui
                     else
                     {
                         //no esta en cache o esta invalido, lo traigo de memoria
-                        if (Monitor.TryEnter(memoria))
+                        if (Monitor.TryEnter(p.memoria))
                         {
                             try
                             {
@@ -404,14 +356,14 @@ namespace Proyecto_Arqui
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
-                                cacheDatos[posicionC * 3] = memoria[bloque, palabra];
+                                cacheDatos[posicionC * 3] = p.memoria[bloque, palabra];
                                 cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 3];
                             }
                             finally
                             {
-                                Monitor.Exit(memoria);
+                                Monitor.Exit(p.memoria);
                             }
                         }
                     }
@@ -476,7 +428,7 @@ namespace Proyecto_Arqui
         }
 
         // Busca las instruccion a ejecutar en la cache de instrucciones
-        public int[] buscarInstruccion(ref Procesador p)
+        public int[] buscarInstruccion(ref Organizador p)
         {
             int bloque = calcularBloque(PC);
             int pos = posicionCache(bloque); // Para buscar en la etiqueta de la memoria caché
