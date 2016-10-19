@@ -186,7 +186,7 @@ namespace Proyecto_Arqui
             }
         }
 
-        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Procesador p)
+        public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, ref Organizador p)
         {
             //hay hilillos que correr?
             while (p.direccionHilillo.Count > 0)
@@ -194,8 +194,7 @@ namespace Proyecto_Arqui
                 quantumLocal = quantum;
                 int dirHilillo = p.direccionHilillo.Dequeue();
                 contexto[32] = dirHilillo;
-
-                cargarContexto();
+                cargarContexto(p.colaContexto.Dequeue());//saca un contexto de la cola
                 while (quantumLocal > 0)
                 {
                     int[] instruccion = buscarInstruccion(ref p);
@@ -255,7 +254,8 @@ namespace Proyecto_Arqui
 
                         case 63:    // Codigo para terminar el programa
                             p.direccionHilillo.Enqueue(PC);
-                            guardarContexto();
+                            int [] contextoGuardar=guardarContexto();
+                            p.colaContexto.Enqueue(contextoGuardar);//mete el contexto a la cola
                             break;
                     }
                     quantumLocal--;
@@ -450,25 +450,28 @@ namespace Proyecto_Arqui
            
             for (int i = 0; i < 32; i++)
             {
-                contexto[i] = contextoCargar[i];
+                registros[i] = contextoCargar[i];
             }
-            PC = contexto[32];
-            RL = contexto[33];
-            //falta inicio y fin del reloj
+            PC = contextoCargar[32];
+            RL = contextoCargar[33];
+            relojInicio= contextoCargar[34];
+            relojFin=contextoCargar[35];
 
         }
 
-        private void guardarContexto()
+        private int []  guardarContexto()
         {
+            int[] contextoGuardar =new int[36];
             for (int i = 0; i < 32; i++)
             {
-                contexto[i] = registros[i];
+                contextoGuardar[i] = registros[i];
             }
-            contexto[32] = PC;
-            contexto[33] = RL;
-           // contexto[34] = reloj;
+            contextoGuardar[32] = PC;
+            contextoGuardar[33] = RL;
+            contextoGuardar[34] = 0;
+            contextoGuardar[35] = 0;
 
-            
+            return contextoGuardar;
 
         }
 
