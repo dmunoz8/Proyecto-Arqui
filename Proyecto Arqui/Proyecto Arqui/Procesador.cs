@@ -97,7 +97,7 @@ namespace Proyecto_Arqui
                             break;
 
                         case 2:
-                            i = 35;
+                            i = 36;
                             break;
 
                         case 3:
@@ -115,7 +115,8 @@ namespace Proyecto_Arqui
                              }*/
                                 while (lengthMemoria < 16)
                             {
-                                cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
+                                try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; }
+                                catch{ Console.WriteLine("Bloque: {0}, length: {1}",bloque, lengthMemoria); }
                                 lengthMemoria++;
                                 i++;
                             }
@@ -241,10 +242,11 @@ namespace Proyecto_Arqui
                 }
                 else
                 {
-                    mut.ReleaseMutex();
-                    sincronizacion.RemoveParticipant();
+                    mut.ReleaseMutex();                    
                 }
             }
+            sincronizacion.SignalAndWait();
+            sincronizacion.RemoveParticipant();
         }
 
         private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro, ref Organizador p)
