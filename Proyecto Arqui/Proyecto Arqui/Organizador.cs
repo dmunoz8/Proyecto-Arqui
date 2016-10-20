@@ -63,17 +63,25 @@ namespace Proyecto_Arqui
             hilo_proc2.Start();
             hilo_proc3.Start();
 
-            /*  //despliega informacion 
+              //despliega informacion 
             Procesador principal = new Procesador();
-            principal.Visible = true;
-
+           
             BindingList<string> data = new BindingList<string>();
+            BindingList<string> data2 = new BindingList<string>();
+            BindingList<string> data3 = new BindingList<string>();
+
             for(int i = 0; i < 32; i ++)
             {
                 data.Add("R" + i + ":" + procesador1.registros[i]);
+                data2.Add("R" + i + ":" + procesador2.registros[i]);
+                data3.Add("R" + i + ":" + procesador3.registros[i]);
             }
             principal.CD1.DataSource = data;
-            */
+            principal.CD2.DataSource = data2;
+            principal.CD3.DataSource = data3;
+            principal.Visible = true;
+
+            int a = 0;
               
             sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
         }
