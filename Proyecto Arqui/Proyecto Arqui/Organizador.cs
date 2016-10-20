@@ -77,20 +77,15 @@ namespace Proyecto_Arqui
                 data3.Add("R" + i + ":" + procesador3.registros[i]);
             }
             principal.CD1.DataSource = data;
-            */
-
-            sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
+                        principal.CD2.DataSource = data2;
+            principal.CD3.DataSource = data3;
+            principal.Visible = true;
+              
+            sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
 
             hilo_proc1.Join();
             hilo_proc2.Join();
             hilo_proc3.Join();
-            principal.CD2.DataSource = data2;
-            principal.CD3.DataSource = data3;
-            principal.Visible = true;
-
-            int a = 0;
-              
-            sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
         }
 
         /// <summary>
