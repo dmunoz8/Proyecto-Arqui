@@ -230,11 +230,12 @@ namespace Proyecto_Arqui
             int bloque = calcularBloque(dirMem);
             int palabra = calcularPalabra(dirMem);
             int posicionC = posicionCache(bloque);
+
             int cantInvalidadas = 0;
 
             //posiciones de la cache
-            int posEtiqueta = 0;
-            int posEstado = 0;
+            int posEtiqueta = 1;
+            int posEstado = 2;
 
             bool datoEnMiCache = false;
 
@@ -245,11 +246,11 @@ namespace Proyecto_Arqui
                 try
                 {
                     //verificar si esta en la cache del procesador a
-                    if (a.cacheDatos[posEtiqueta] == bloque)
+                    if (a.cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
                     {    //si tiene el dato
-                        if (a.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                        if (a.cacheDatos[posicionC * 3 + posEstado] == 1)          //si esta valido, lo invalido
                         {
-                            a.cacheDatos[posEstado] = -1;
+                            a.cacheDatos[posicionC * 3 + posEstado] = -1;
                         }
                         cantInvalidadas++;
                     }
@@ -259,11 +260,11 @@ namespace Proyecto_Arqui
                         try
                         {
                             //verificar si esta en la cache del procesador b
-                            if (b.cacheDatos[posEtiqueta] == bloque)
+                            if (b.cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
                             {    //si tiene el dato
-                                if (b.cacheDatos[posEstado] == 1)          //si esta valido, lo invalido
+                                if (b.cacheDatos[posicionC * 3 + posEstado] == 1)          //si esta valido, lo invalido
                                 {
-                                    b.cacheDatos[posEstado] = -1;
+                                    b.cacheDatos[posicionC * 3 + posEstado] = -1;
                                 }
                                 cantInvalidadas++;
                             }
@@ -273,11 +274,11 @@ namespace Proyecto_Arqui
                                 try
                                 {
                                     //verificar si esta en mi cache
-                                    if (cacheDatos[posEtiqueta] == bloque)
+                                    if (cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
                                     {    //si tiene el dato
-                                        if (cacheDatos[posEstado] == 1)   //si esta valido, lo invalido
+                                        if (cacheDatos[posicionC * 3 + posEstado] == 1)   //si esta valido, lo invalido
                                         {
-                                            cacheDatos[posEstado] = -1;
+                                            cacheDatos[posicionC * 3 + posEstado] = -1;
                                         }
                                         datoEnMiCache = true;
                                     }
@@ -289,8 +290,8 @@ namespace Proyecto_Arqui
                                         if (datoEnMiCache)
                                         {
                                             //escribo en mi cache
-                                            cacheDatos[posicionC] = datoEscribir;
-                                            cacheDatos[posEstado] = 1;
+                                            cacheDatos[posicionC * 3] = datoEscribir;
+                                            cacheDatos[posicionC * 3 + posEstado] = 1;
                                         }
                                         //escribo en memoria
                                         if (Monitor.TryEnter(p.memoria))
