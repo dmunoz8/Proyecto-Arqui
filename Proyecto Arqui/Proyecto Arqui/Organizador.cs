@@ -158,13 +158,14 @@ namespace Proyecto_Arqui
                     {
                         if (instruccion == instrucciones.First())
                         {
-                            direccionHilillo.Enqueue(fila * 16); //Esto solo sirve si cada hilillo tiene 4 o mas instrucciones
+                            direccionHilillo.Enqueue(fila * 16 + col);
 
-                            llenarCola(fila * 16);
+                            llenarCola(fila * 16 + col);
                         }
                         if(col == 16)
                         {
                             col = 0;
+                            fila++;
                         }
 
                         string[] codigos = instruccion.Split(' ');
