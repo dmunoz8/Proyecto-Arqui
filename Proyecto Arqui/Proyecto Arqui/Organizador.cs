@@ -162,6 +162,10 @@ namespace Proyecto_Arqui
 
                             llenarCola(fila * 16);
                         }
+                        if(col == 16)
+                        {
+                            col = 0;
+                        }
 
                         string[] codigos = instruccion.Split(' ');
                         for (int i = 0; i < codigos.Length; i++)
