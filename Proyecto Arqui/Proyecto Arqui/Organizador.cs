@@ -21,6 +21,7 @@ namespace Proyecto_Arqui
         int _CANTHILILLOS;
         int _QUANTUM;
         int reloj;
+        Procesador principal;
         Procesador procesador1;
         Procesador procesador2;
         Procesador procesador3;
@@ -31,6 +32,8 @@ namespace Proyecto_Arqui
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
             reloj = 0;
+            principal = new Procesador();
+
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
             procesador1 = new Procesador(1, sincronizacion);
@@ -61,25 +64,7 @@ namespace Proyecto_Arqui
 
             hilo_proc1.Start();
             hilo_proc2.Start();
-            hilo_proc3.Start();
-
-            //despliega informacion 
-            Procesador principal = new Procesador();
-           
-            //BindingList<string> data = new BindingList<string>();
-            //BindingList<string> data2 = new BindingList<string>();
-            //BindingList<string> data3 = new BindingList<string>();
-
-            //for(int i = 0; i < 32; i ++)
-            //{
-            //    data.Add("R" + i + ":" + procesador1.registros[i]);
-            //    data2.Add("R" + i + ":" + procesador2.registros[i]);
-            //    data3.Add("R" + i + ":" + procesador3.registros[i]);
-            //}
-            //principal.CD1.DataSource = data;
-            //            principal.CD2.DataSource = data2;
-            //principal.CD3.DataSource = data3;
-            //principal.Visible = true;
+            hilo_proc3.Start();                          
               
             sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
 
@@ -121,6 +106,9 @@ namespace Proyecto_Arqui
                 //    proc3Corriendo = false;
                 //    sincronizacion.RemoveParticipant();
                 //}
+
+                //despliega informacion 
+                imprimirDatos();
 
                 //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
                 reloj++;
@@ -213,7 +201,20 @@ namespace Proyecto_Arqui
 
         public void imprimirDatos()
         {
+            BindingList<string> data = new BindingList<string>();
+            BindingList<string> data2 = new BindingList<string>();
+            BindingList<string> data3 = new BindingList<string>();
 
+            for (int i = 0; i < 32; i++)
+            {
+                data.Add("R" + i + ":" + procesador1.registros[i]);
+                data2.Add("R" + i + ":" + procesador2.registros[i]);
+                data3.Add("R" + i + ":" + procesador3.registros[i]);
+            }
+            principal.CD1.DataSource = data;
+            principal.CD2.DataSource = data2;
+            principal.CD3.DataSource = data3;
+            principal.Visible = true;
         }
     }
 }
