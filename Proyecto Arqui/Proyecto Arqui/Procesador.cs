@@ -217,7 +217,10 @@ namespace Proyecto_Arqui
                 if (fin != 63)
                 {
                     int[] contextoGuardar1 = guardarContexto();
-                    p.colaContexto.Enqueue(contextoGuardar1);
+                    if (contextoGuardar1 != null)
+                    {
+                        p.colaContexto.Enqueue(contextoGuardar1);
+                    }
                 }
             }
         }
