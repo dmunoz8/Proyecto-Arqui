@@ -74,8 +74,12 @@ namespace Proyecto_Arqui
             }
             principal.CD1.DataSource = data;
             */
-              
-            sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
+
+            sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
+
+            hilo_proc1.Join();
+            hilo_proc2.Join();
+            hilo_proc3.Join();
         }
 
         /// <summary>
@@ -88,31 +92,29 @@ namespace Proyecto_Arqui
         /// <param name="proc3">Procesador a sincronizar</param>
         public void sincronizarReloj(Thread proc1, Thread proc2, Thread proc3)
         {
-            Console.WriteLine("\nAvance del reloj:");
+            //Variables para saber cual hilo se ha removido de la barrera
+            //bool proc1Corriendo = true;
+            //bool proc2Corriendo = true;
+            //bool proc3Corriendo = true;
 
             while (sincronizacion.ParticipantCount > 1)
             {
-                //Variables para saber cual hilo se ha removido de la barrera
-                bool proc1Corriendo = true;
-                bool proc2Corriendo = true;
-                bool proc3Corriendo = true;
-
                 //Se revisa si los procesadores siguen trabajando
-                if (!proc1.IsAlive && proc1Corriendo)
-                {
-                    proc1Corriendo = false;
-                    sincronizacion.RemoveParticipant();
-                }
-                if (!proc2.IsAlive && proc2Corriendo)
-                {
-                    proc2Corriendo = false;
-                    sincronizacion.RemoveParticipant();
-                }
-                if (!proc3.IsAlive && proc3Corriendo)
-                {
-                    proc3Corriendo = false;
-                    sincronizacion.RemoveParticipant();
-                }
+                //if (!proc1.IsAlive && proc1Corriendo)
+                //{
+                //    proc1Corriendo = false;
+                //    sincronizacion.RemoveParticipant();
+                //}
+                //if (!proc2.IsAlive && proc2Corriendo)
+                //{
+                //    proc2Corriendo = false;
+                //    sincronizacion.RemoveParticipant();
+                //}
+                //if (!proc3.IsAlive && proc3Corriendo)
+                //{
+                //    proc3Corriendo = false;
+                //    sincronizacion.RemoveParticipant();
+                //}
 
                 //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
                 reloj++;
@@ -121,9 +123,9 @@ namespace Proyecto_Arqui
                 procesador3.reloj = reloj;
 
                 //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
-                sincronizacion.SignalAndWait(); 
-
-                //Console.WriteLine(reloj);
+                Console.WriteLine("Organizador. Reloj: {0}",reloj);
+                sincronizacion.SignalAndWait();
+                if (sincronizacion.ParticipantCount==1) Console.WriteLine("Sigue...");
             }
         }
 
@@ -151,7 +153,7 @@ namespace Proyecto_Arqui
                 int fila = 24;
                 int col = 0;
                 foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
-                {
+                { 
                     string contents = File.ReadAllText(files);
                     string[] instrucciones = contents.Split('\n');
                     foreach (string instruccion in instrucciones)

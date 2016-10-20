@@ -14,12 +14,14 @@ namespace Proyecto_Arqui
 {
     public partial class Procesador : Form
     {
+        private int numeroProcesador;
         public int[] registros; //32 (R0 - R31)
         public int[] contexto; //36 R0-R31, PC, PR relojInicio, relojFin 
         public int[] cacheDatos; // 4 bloques de una palabra
         public int[] cacheInstrucciones; // 4 bloques de 4 palabras
         public Queue<int> hilillos;
         public Barrier sincronizacion;
+        public static Mutex mut;
         public int quantumLocal;
         public int reloj;
         public int RL;
@@ -29,11 +31,13 @@ namespace Proyecto_Arqui
 
         public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
+            numeroProcesador = numProcesador;
             InitializeComponent();
             quantumLocal = 0;
             reloj = 0;
             PC = 0;
             this.sincronizacion = sincronizacion;
+            mut = new Mutex();
         }
 
         //inicializador de registros y caches de datos de los tres procesadores 
@@ -109,7 +113,7 @@ namespace Proyecto_Arqui
                                  //de caché a memoria = 28 ciclos
                                  //sincronizacion.SignalAndWait();
                              }*/
-                            while (lengthMemoria < 16)
+                                while (lengthMemoria < 16)
                             {
                                 cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
                                 lengthMemoria++;
@@ -133,91 +137,112 @@ namespace Proyecto_Arqui
         {
             int[] instruccion = new int[4];
             int fin = -1;
+            int hilillos;
             //hay hilillos que correr?
+            
             while (p.colaContexto.Count > 0)
             {
                 quantumLocal = quantum;
                 //int dirHilillo = p.direccionHilillo.Dequeue();
                 //contexto[32] = dirHilillo;
-                cargarContexto(p.colaContexto.Dequeue());//saca un contexto de la cola
-                while (quantumLocal > 0 && fin != 63)
-                {
-                    instruccion = buscarInstruccion(ref p);
-                    PC += 4;
-                    switch (instruccion[0])
+                
+                mut.WaitOne();
+                hilillos = p.colaContexto.Count;
+                if (hilillos > 0)
+                {                   
+                    int[] contextoACargar = p.colaContexto.Dequeue();
+                    if(contextoACargar == null)
                     {
-                        case 2:     // JR
-                            PC = registros[instruccion[1]];
-                            break;
-
-                        case 3:     // JAL
-                            registros[31] = PC;
-                            PC += instruccion[3];
-                            break;
-
-                        case 4:     // BEQZ
-                            if (registros[instruccion[1]] == 0)
-                            {
-                                PC += instruccion[3] * 4;
-                            }
-                            break;
-
-                        case 5:     // BENZ
-                            if (registros[instruccion[1]] != 0)
-                            {
-                                PC += instruccion[3] * 4;
-                            }
-                            break;
-
-                        case 8:     // DADDI
-                            registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
-                            break;
-
-                        case 12:    // DMUL
-                            registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
-                            break;
-
-                        case 14:    // DDIV
-                            registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
-                            break;
-
-                        case 32:    // DADD
-                            registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
-                            break;
-
-                        case 34:    // DSUB
-                            registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
-                            break;
-
-                        case 35:    // LW
-                            ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                            break;
-
-                        case 43:    // SW
-                            ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                            break;
-
-                        case 63:    // Codigo para terminar el programa
-                            //p.direccionHilillo.Enqueue(PC);
-                            //int [] contextoGuardar=guardarContexto();
-                            //p.colaContexto.Enqueue(contextoGuardar);//mete el contexto a la cola
-                            fin = 63;
-                            break;
+                        Console.WriteLine("Hilillos: {0}", hilillos);
                     }
-                    quantumLocal--;
-                    //reloj++;
-                    //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
-                    //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
-                    sincronizacion.SignalAndWait();
-                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    //reloj++;
-                    //imprimir(ref p);
-                }
+                    mut.ReleaseMutex();
+                    cargarContexto(contextoACargar);//saca un contexto de la cola
+                    while (quantumLocal > 0 && fin != 63)
+                    {
+                        instruccion = buscarInstruccion(ref p);
+                        PC += 4;
+                        switch (instruccion[0])
+                        {
+                            case 2:     // JR
+                                PC = registros[instruccion[1]];
+                                break;
 
-                if (fin != 63)
+                            case 3:     // JAL
+                                registros[31] = PC;
+                                PC += instruccion[3];
+                                break;
+
+                            case 4:     // BEQZ
+                                if (registros[instruccion[1]] == 0)
+                                {
+                                    PC += instruccion[3] * 4;
+                                }
+                                break;
+
+                            case 5:     // BENZ
+                                if (registros[instruccion[1]] != 0)
+                                {
+                                    PC += instruccion[3] * 4;
+                                }
+                                break;
+
+                            case 8:     // DADDI
+                                registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
+                                break;
+
+                            case 12:    // DMUL
+                                registros[instruccion[3]] = registros[instruccion[1]] * registros[instruccion[2]];
+                                break;
+
+                            case 14:    // DDIV
+                                registros[instruccion[3]] = registros[instruccion[1]] / registros[instruccion[2]];
+                                break;
+
+                            case 32:    // DADD
+                                registros[instruccion[3]] = registros[instruccion[1]] + registros[instruccion[2]];
+                                break;
+
+                            case 34:    // DSUB
+                                registros[instruccion[3]] = registros[instruccion[1]] - registros[instruccion[2]];
+                                break;
+
+                            case 35:    // LW
+                                ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                break;
+
+                            case 43:    // SW
+                                ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                break;
+
+                            case 63:    // Codigo para terminar el programa
+                                fin = 63;
+                                break;
+                        }
+                        quantumLocal--;
+                        //reloj++;
+                        //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
+                        //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
+                        //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nInst: {2} {3} {4} {5}",
+                        //reloj, quantumLocal, instruccion[0], instruccion[1], instruccion[2], instruccion[3]);
+                        Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nPC: {2}", reloj, quantumLocal, PC);
+
+                        sincronizacion.SignalAndWait();
+                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        //imprimir(ref p);
+                    }
+
+                    if (fin != 63)
+                    {
+                        int[] contextoGuardar1 = guardarContexto();
+                        mut.WaitOne();
+                        p.colaContexto.Enqueue(contextoGuardar1);
+                        mut.ReleaseMutex();                        
+                    }
+                }
+                else
                 {
-                    int[] contextoGuardar1 = guardarContexto();
-                    p.colaContexto.Enqueue(contextoGuardar1);
+                    mut.ReleaseMutex();
+                    sincronizacion.RemoveParticipant();
                 }
             }
         }
@@ -298,6 +323,7 @@ namespace Proyecto_Arqui
                                                 for (int w = 0; w < 7; w++)
                                                 {
                                                     //  Tarda 7 ciclos, se envían 7 señales
+                                                    Console.WriteLine("SW: {0}. Reloj: {1}",w,reloj);
                                                     sincronizacion.SignalAndWait();
                                                 }
                                                 p.memoria[bloque, palabra] = datoEscribir;
@@ -354,6 +380,7 @@ namespace Proyecto_Arqui
                                 for (int w = 0; w < 28; w++)
                                 {
                                     //  Tarda 28 ciclos, se envían 28 señales
+                                    Console.WriteLine("LW: {0}. Reloj: {1}", w, reloj);
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
