@@ -29,12 +29,12 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.regs = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox3 = new System.Windows.Forms.RichTextBox();
+            this.datos = new System.Windows.Forms.RichTextBox();
+            this.mem = new System.Windows.Forms.RichTextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.richTextBox5 = new System.Windows.Forms.RichTextBox();
+            this.ciclos = new System.Windows.Forms.RichTextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -42,7 +42,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.richTextBox2);
+            this.groupBox1.Controls.Add(this.regs);
             this.groupBox1.Location = new System.Drawing.Point(31, 12);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(895, 141);
@@ -50,9 +50,17 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Registros";
             // 
+            // regs
+            // 
+            this.regs.Location = new System.Drawing.Point(6, 19);
+            this.regs.Name = "regs";
+            this.regs.Size = new System.Drawing.Size(883, 112);
+            this.regs.TabIndex = 3;
+            this.regs.Text = "";
+            // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.richTextBox3);
+            this.groupBox2.Controls.Add(this.datos);
             this.groupBox2.Location = new System.Drawing.Point(31, 159);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(895, 141);
@@ -60,29 +68,21 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Cache de Datos";
             // 
-            // richTextBox1
+            // datos
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(31, 425);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(895, 145);
-            this.richTextBox1.TabIndex = 2;
-            this.richTextBox1.Text = "";
+            this.datos.Location = new System.Drawing.Point(6, 19);
+            this.datos.Name = "datos";
+            this.datos.Size = new System.Drawing.Size(883, 113);
+            this.datos.TabIndex = 4;
+            this.datos.Text = "";
             // 
-            // richTextBox2
+            // mem
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(6, 19);
-            this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(883, 112);
-            this.richTextBox2.TabIndex = 3;
-            this.richTextBox2.Text = "";
-            // 
-            // richTextBox3
-            // 
-            this.richTextBox3.Location = new System.Drawing.Point(6, 19);
-            this.richTextBox3.Name = "richTextBox3";
-            this.richTextBox3.Size = new System.Drawing.Size(883, 113);
-            this.richTextBox3.TabIndex = 4;
-            this.richTextBox3.Text = "";
+            this.mem.Location = new System.Drawing.Point(31, 425);
+            this.mem.Name = "mem";
+            this.mem.Size = new System.Drawing.Size(895, 145);
+            this.mem.TabIndex = 2;
+            this.mem.Text = "";
             // 
             // label1
             // 
@@ -94,13 +94,13 @@
             this.label1.Text = "Ciclos";
             this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
-            // richTextBox5
+            // ciclos
             // 
-            this.richTextBox5.Location = new System.Drawing.Point(37, 332);
-            this.richTextBox5.Name = "richTextBox5";
-            this.richTextBox5.Size = new System.Drawing.Size(895, 55);
-            this.richTextBox5.TabIndex = 8;
-            this.richTextBox5.Text = "";
+            this.ciclos.Location = new System.Drawing.Point(37, 332);
+            this.ciclos.Name = "ciclos";
+            this.ciclos.Size = new System.Drawing.Size(895, 55);
+            this.ciclos.TabIndex = 8;
+            this.ciclos.Text = "";
             // 
             // label2
             // 
@@ -117,13 +117,14 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(938, 583);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.richTextBox5);
+            this.Controls.Add(this.ciclos);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.richTextBox1);
+            this.Controls.Add(this.mem);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "Resultados";
             this.Text = "Resultados";
+            this.Load += new System.EventHandler(this.Resultados_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -135,11 +136,11 @@
 
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.RichTextBox richTextBox2;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.RichTextBox richTextBox3;
-        private System.Windows.Forms.RichTextBox richTextBox1;
-        private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.Label label2;
+        public System.Windows.Forms.RichTextBox regs;
+        public System.Windows.Forms.RichTextBox datos;
+        public System.Windows.Forms.RichTextBox mem;
+        public System.Windows.Forms.RichTextBox ciclos;
     }
 }

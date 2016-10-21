@@ -21,5 +21,10 @@ namespace Proyecto_Arqui
         {
 
         }
+
+        private void Resultados_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
