@@ -12,9 +12,11 @@ namespace Proyecto_Arqui
 {
     public partial class Resultados : Form
     {
-        public Resultados()
+        Organizador org;
+        public Resultados(Organizador organizado)
         {
             InitializeComponent();
+            org = organizado;
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -26,5 +28,19 @@ namespace Proyecto_Arqui
         {
 
         }
+        public void imprimir()
+        {
+            for (int i = 0; i < 64; i++)
+            {
+                for (int j = 0; j < 16; j++)
+                {
+                    mem.Text += org.memoria[i, j].ToString() + " ";
+                }
+                mem.Text += '\n';
+            }
+
+            Visible = true;
+        }
+
     }
 }

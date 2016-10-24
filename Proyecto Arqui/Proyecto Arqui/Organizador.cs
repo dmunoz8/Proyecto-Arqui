@@ -21,7 +21,7 @@ namespace Proyecto_Arqui
         int _CANTHILILLOS;
         int _QUANTUM;
         int reloj;
-        Resultados resultado;
+        //Resultados resultado;
         Procesador principal;
         Procesador procesador1;
         Procesador procesador2;
@@ -34,7 +34,7 @@ namespace Proyecto_Arqui
             _QUANTUM = quantum;
             reloj = 0;
             principal = new Procesador();
-            resultado = new Resultados();
+            //resultado = new Resultados();
 
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
@@ -74,7 +74,7 @@ namespace Proyecto_Arqui
             hilo_proc2.Join();
             hilo_proc3.Join();
 
-            imprimirFinal();
+            //imprimirFinal();
         }
 
         /// <summary>
@@ -219,22 +219,6 @@ namespace Proyecto_Arqui
             principal.CD2.DataSource = data2;
             principal.CD3.DataSource = data3;
             principal.Visible = true;
-        }
-
-        public void imprimirFinal()
-        {
-            for (int i = 0; i < 64; i++)
-            {
-                for(int j = 0; j < 16; j++)
-                {
-                    resultado.mem.Text += memoria[i,j].ToString() + " ";
-                }
-                resultado.mem.Text += '\n';
-            }
-
-            resultado.Visible = true;
-            resultado.Enabled = true;
-            Thread.Sleep(10000);
         }
     }
 }
