@@ -368,9 +368,9 @@ namespace Proyecto_Arqui
                 try
                 {
                     //Si el dato está en caché y está valido, lo copio al registro 
-                    if (cacheDatos[posicionC * 3 + 1] == bloque && cacheDatos[posicionC * 3 + 2] != -1)
+                    if (cacheDatos[posicionC * 6 + 4] == bloque && cacheDatos[posicionC * 6 + 5] != -1)
                     {
-                        registros[numeroRegistro] = cacheDatos[posicionC * 3];//carga al registro
+                        registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];//carga al registro
                     }
                     else
                     {
@@ -386,10 +386,13 @@ namespace Proyecto_Arqui
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
-                                cacheDatos[posicionC * 3] = p.memoria[bloque, palabra];
-                                cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
-                                cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
-                                registros[numeroRegistro] = cacheDatos[posicionC * 3];
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    cacheDatos[posicionC * 6 + i] = p.memoria[bloque, i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
+                                }
+                                cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
+                                cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
+                                registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
                             }
                             finally
                             {
@@ -424,7 +427,7 @@ namespace Proyecto_Arqui
         /// <returns></returns>
         public int calcularPalabra(int direccionMemoria)
         {
-            return direccionMemoria % 16;
+            return (direccionMemoria % 16) / 4;
         }
 
         private void cargarContexto(int [] contextoCargar)
