@@ -97,7 +97,7 @@ namespace Proyecto_Arqui
                             break;
 
                         case 2:
-                            i = 35;
+                            i = 36;
                             break;
 
                         case 3:
@@ -115,7 +115,8 @@ namespace Proyecto_Arqui
                              }*/
                                 while (lengthMemoria < 16)
                             {
-                                cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria];
+                                try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; }
+                                catch{ Console.WriteLine("Bloque: {0}, length: {1}",bloque, lengthMemoria); }
                                 lengthMemoria++;
                                 i++;
                             }
@@ -241,10 +242,11 @@ namespace Proyecto_Arqui
                 }
                 else
                 {
-                    mut.ReleaseMutex();
-                    sincronizacion.RemoveParticipant();
+                    mut.ReleaseMutex();                    
                 }
             }
+            sincronizacion.SignalAndWait();
+            sincronizacion.RemoveParticipant();
         }
 
         private void ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
@@ -373,9 +375,9 @@ namespace Proyecto_Arqui
                 try
                 {
                     //Si el dato está en caché y está valido, lo copio al registro 
-                    if (cacheDatos[posicionC * 3 + 1] == bloque && cacheDatos[posicionC * 3 + 2] != -1)
+                    if (cacheDatos[posicionC * 6 + 4] == bloque && cacheDatos[posicionC * 6 + 5] != -1)
                     {
-                        registros[numeroRegistro] = cacheDatos[posicionC * 3];//carga al registro
+                        registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];//carga al registro
                     }
                     else
                     {
@@ -391,10 +393,13 @@ namespace Proyecto_Arqui
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro
-                                cacheDatos[posicionC * 3] = p.memoria[bloque, palabra];
-                                cacheDatos[posicionC * 3 + 1] = bloque; //Etiqueta
-                                cacheDatos[posicionC * 3 + 2] = 1;  //Bloque valido
-                                registros[numeroRegistro] = cacheDatos[posicionC * 3];
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    cacheDatos[posicionC * 6 + i] = p.memoriaDatos[bloque,i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
+                                }
+                                cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
+                                cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
+                                registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
                             }
                             finally
                             {

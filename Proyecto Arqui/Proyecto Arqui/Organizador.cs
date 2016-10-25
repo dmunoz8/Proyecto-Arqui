@@ -14,6 +14,7 @@ namespace Proyecto_Arqui
 {
     public class Organizador
     {
+        public int[,] memoriaDatos;
         public int[,] memoria; //64*16 = 1024 bytes
         public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         public Queue<int []> colaContexto;
@@ -21,6 +22,8 @@ namespace Proyecto_Arqui
         int _CANTHILILLOS;
         int _QUANTUM;
         int reloj;
+        //Resultados resultado;
+        Procesador principal;
         Procesador procesador1;
         Procesador procesador2;
         Procesador procesador3;
@@ -31,6 +34,9 @@ namespace Proyecto_Arqui
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
             reloj = 0;
+            principal = new Procesador();
+            //resultado = new Resultados();
+
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
             procesador1 = new Procesador(1, sincronizacion);
@@ -61,31 +67,15 @@ namespace Proyecto_Arqui
 
             hilo_proc1.Start();
             hilo_proc2.Start();
-            hilo_proc3.Start();
-
-              //despliega informacion 
-            Procesador principal = new Procesador();
-           
-            BindingList<string> data = new BindingList<string>();
-            BindingList<string> data2 = new BindingList<string>();
-            BindingList<string> data3 = new BindingList<string>();
-
-            for(int i = 0; i < 32; i ++)
-            {
-                data.Add("R" + i + ":" + procesador1.registros[i]);
-                data2.Add("R" + i + ":" + procesador2.registros[i]);
-                data3.Add("R" + i + ":" + procesador3.registros[i]);
-            }
-            principal.CD1.DataSource = data;
-                        principal.CD2.DataSource = data2;
-            principal.CD3.DataSource = data3;
-            principal.Visible = true;
+            hilo_proc3.Start();                          
               
-            sincronizarReloj(hilo_proc1,hilo_proc2,hilo_proc3);
+            sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
 
             hilo_proc1.Join();
             hilo_proc2.Join();
             hilo_proc3.Join();
+
+            //imprimirFinal();
         }
 
         /// <summary>
@@ -122,6 +112,9 @@ namespace Proyecto_Arqui
                 //    sincronizacion.RemoveParticipant();
                 //}
 
+                //despliega informacion 
+                imprimirDatos();
+
                 //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
                 reloj++;
                 procesador1.reloj = reloj;
@@ -130,8 +123,7 @@ namespace Proyecto_Arqui
 
                 //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
                 Console.WriteLine("Organizador. Reloj: {0}",reloj);
-                sincronizacion.SignalAndWait();
-                if (sincronizacion.ParticipantCount==1) Console.WriteLine("Sigue...");
+                sincronizacion.SignalAndWait();                
             }
         }
 
@@ -139,6 +131,8 @@ namespace Proyecto_Arqui
         public void inicializarProcesadorPrincipal()
         {
             memoria = new int[64, 16];
+            memoriaDatos = new int[24,4];
+
             for (int i = 0; i < 64; i++)
             {
                 for (int j = 0; j < 16; j++)
@@ -146,8 +140,17 @@ namespace Proyecto_Arqui
                     memoria[i, j] = 1;
                 }
             }
+
             direccionHilillo = new Queue<int>();
             colaContexto = new Queue<int[]>();
+
+            for (int i = 0; i < 24; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    memoriaDatos[i, j] = 1;
+                }
+            }
         }
 
         //el procesador principal carga instrucciones de los txt a memoria principal
@@ -214,7 +217,20 @@ namespace Proyecto_Arqui
 
         public void imprimirDatos()
         {
+            BindingList<string> data = new BindingList<string>();
+            BindingList<string> data2 = new BindingList<string>();
+            BindingList<string> data3 = new BindingList<string>();
 
+            for (int i = 0; i < 32; i++)
+            {
+                data.Add("R" + i + ":" + procesador1.registros[i]);
+                data2.Add("R" + i + ":" + procesador2.registros[i]);
+                data3.Add("R" + i + ":" + procesador3.registros[i]);
+            }
+            principal.CD1.DataSource = data;
+            principal.CD2.DataSource = data2;
+            principal.CD3.DataSource = data3;
+            principal.Visible = true;
         }
     }
 }
