@@ -46,7 +46,7 @@ namespace Proyecto_Arqui
             registros = new int[32];
             contexto = new int[36];
             cacheInstrucciones = new int[72];
-            cacheDatos = new int[12]; //4*(1palabra+2campos de control) --> 4 * valor, etiqueta y estado.
+            cacheDatos = new int[24]; //4*(1palabra(4 enteros)+2campos de control) --> 4 * valor, etiqueta y estado.
 
             for (int i = 0; i < 32; i++)
             {
@@ -211,7 +211,7 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
-                                ejecutarSW(ref a, ref b, ref c, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                                 break;
 
                             case 63:    // Codigo para terminar el programa
@@ -247,17 +247,20 @@ namespace Proyecto_Arqui
             }
         }
 
-        private void ejecutarSW(ref Procesador a, ref Procesador b, ref Procesador c, int dirMem, int numRegistro, ref Organizador p)
+        private void ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
-            int bloque = calcularBloque(dirMem);
+
             int palabra = calcularPalabra(dirMem);
+            int bloque = calcularBloque(dirMem);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);
+            
 
             int cantInvalidadas = 0;
+            int cantCompartidos=0;
 
             //posiciones de la cache
-            int posEtiqueta = 1;
-            int posEstado = 2;
+            int posEtiqueta = 4;
+            int posEstado = 5;
 
             bool datoEnMiCache = false;
 
@@ -268,12 +271,15 @@ namespace Proyecto_Arqui
                 try
                 {
                     //verificar si esta en la cache del procesador a
-                    if (a.cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
-                    {    //si tiene el dato
-                        if (a.cacheDatos[posicionC * 3 + posEstado] == 1)          //si esta valido, lo invalido
+                    if (a.cacheDatos[posicionC * 6 + posEtiqueta] == dirMem)
+                    {
+                        
+                        //si tiene el dato
+                        if (a.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
                         {
-                            a.cacheDatos[posicionC * 3 + posEstado] = -1;
+                            a.cacheDatos[posicionC * 6 + posEstado] = -1;
                         }
+                        cantCompartidos++;
                         cantInvalidadas++;
                     }
 
@@ -282,12 +288,13 @@ namespace Proyecto_Arqui
                         try
                         {
                             //verificar si esta en la cache del procesador b
-                            if (b.cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
+                            if (b.cacheDatos[posicionC * 6 + posEtiqueta] == dirMem)
                             {    //si tiene el dato
-                                if (b.cacheDatos[posicionC * 3 + posEstado] == 1)          //si esta valido, lo invalido
+                                if (b.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
                                 {
-                                    b.cacheDatos[posicionC * 3 + posEstado] = -1;
+                                    b.cacheDatos[posicionC * 6 + posEstado] = -1;
                                 }
+                                cantCompartidos++;
                                 cantInvalidadas++;
                             }
                             //verificar si lo tengo en mi cahe e invalidarlo
@@ -296,24 +303,24 @@ namespace Proyecto_Arqui
                                 try
                                 {
                                     //verificar si esta en mi cache
-                                    if (cacheDatos[posicionC * 3 + posEtiqueta] == dirMem)
+                                    if (cacheDatos[posicionC * 6  + posEtiqueta] == dirMem)
                                     {    //si tiene el dato
-                                        if (cacheDatos[posicionC * 3 + posEstado] == 1)   //si esta valido, lo invalido
+                                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
                                         {
-                                            cacheDatos[posicionC * 3 + posEstado] = -1;
+                                            cacheDatos[posicionC * 6 + posEstado] = -1;
                                         }
                                         datoEnMiCache = true;
                                     }
                                     //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
                                     //si el dato esta en mi cache lo escribo ahi y en memoria
                                     //si no esta en mi cache solo escribo en memoria
-                                    if (cantInvalidadas == 2)
+                                    if (cantInvalidadas == cantCompartidos)
                                     {
                                         if (datoEnMiCache)
                                         {
                                             //escribo en mi cache
-                                            cacheDatos[posicionC * 3] = datoEscribir;
-                                            cacheDatos[posicionC * 3 + posEstado] = 1;
+                                            cacheDatos[posicionC + palabra] = datoEscribir;
+                                            cacheDatos[posicionC * 6 + posEstado] = 1;
                                         }
                                         //escribo en memoria
                                         if (Monitor.TryEnter(p.memoria))
@@ -402,7 +409,6 @@ namespace Proyecto_Arqui
                 }
             }
         }
-
         public int calcularBloque(int direccionMemoria)
         {
             int bloque = direccionMemoria / 16;
@@ -422,9 +428,8 @@ namespace Proyecto_Arqui
         /// <returns></returns>
         public int calcularPalabra(int direccionMemoria)
         {
-            return direccionMemoria % 16;
+            return (direccionMemoria % 16) / 4;
         }
-
         private void cargarContexto(int [] contextoCargar)
         {
            
