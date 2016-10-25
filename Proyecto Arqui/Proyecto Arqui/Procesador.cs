@@ -388,7 +388,7 @@ namespace Proyecto_Arqui
                                 //Se sube a caché y se carga en el registro
                                 for (int i = 0; i < 4; i++)
                                 {
-                                    cacheDatos[posicionC * 6 + i] = p.memoria[bloque, i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
+                                    cacheDatos[posicionC * 6 + i] = p.memoriaDatos[bloque,i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
                                 }
                                 cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido

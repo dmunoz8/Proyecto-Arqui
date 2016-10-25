@@ -14,6 +14,7 @@ namespace Proyecto_Arqui
 {
     public class Organizador
     {
+        public int[,] memoriaDatos;
         public int[,] memoria; //64*16 = 1024 bytes
         public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         public Queue<int []> colaContexto;
@@ -130,6 +131,8 @@ namespace Proyecto_Arqui
         public void inicializarProcesadorPrincipal()
         {
             memoria = new int[64, 16];
+            memoriaDatos = new int[24,4];
+
             for (int i = 0; i < 64; i++)
             {
                 for (int j = 0; j < 16; j++)
@@ -137,8 +140,17 @@ namespace Proyecto_Arqui
                     memoria[i, j] = 1;
                 }
             }
+
             direccionHilillo = new Queue<int>();
             colaContexto = new Queue<int[]>();
+
+            for (int i = 0; i < 24; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    memoriaDatos[i, j] = 1;
+                }
+            }
         }
 
         //el procesador principal carga instrucciones de los txt a memoria principal
