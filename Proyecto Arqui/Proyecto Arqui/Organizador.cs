@@ -18,6 +18,7 @@ namespace Proyecto_Arqui
         public int[,] memoria; //64*16 = 1024 bytes
         public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
         public Queue<int []> colaContexto;
+        public Queue<int[]> terminados;
         
         int _CANTHILILLOS;
         int _QUANTUM;
@@ -143,6 +144,7 @@ namespace Proyecto_Arqui
 
             direccionHilillo = new Queue<int>();
             colaContexto = new Queue<int[]>();
+            terminados = new Queue<int[]>();
 
             for (int i = 0; i < 24; i++)
             {

@@ -30,7 +30,16 @@ namespace Proyecto_Arqui
         }
         public void imprimir()
         {
-            for (int i = 0; i < 64; i++)
+            for (int i = 0; i < 24; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    mem.Text += org.memoriaDatos[i, j].ToString() + " ";
+                }
+                mem.Text += '\n';
+            }
+
+            for (int i = 24; i < 64; i++)
             {
                 for (int j = 0; j < 16; j++)
                 {
@@ -39,7 +48,20 @@ namespace Proyecto_Arqui
                 mem.Text += '\n';
             }
 
-            Visible = true;
+            while (org.terminados.Count > 0)
+            {
+                int[] ter = org.terminados.Dequeue();
+                for (int g = 0; g < 32; g++)
+                {
+                    regs.Text += ter[g] + " ";
+                }
+
+                regs.Text += '\n';
+                regs.Text += '\n';
+            }
+            
+
+                Visible = true;
         }
 
     }

@@ -176,6 +176,7 @@
             this.Controls.Add(this.P1);
             this.Name = "Procesador";
             this.Text = "Procesador";
+            this.Load += new System.EventHandler(this.Procesador_Load);
             this.P1.ResumeLayout(false);
             this.P1.PerformLayout();
             this.P2.ResumeLayout(false);

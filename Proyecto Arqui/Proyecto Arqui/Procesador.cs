@@ -217,6 +217,7 @@ namespace Proyecto_Arqui
 
                             case 63:    // Codigo para terminar el programa
                                 fin = 63;
+                                terminarHilillo(ref p);
                                 break;
                         }
                         quantumLocal--;
@@ -499,6 +500,18 @@ namespace Proyecto_Arqui
             return instruccion;
         }
 
+        public void terminarHilillo(ref Organizador org)
+        {
+            int [] final = new int[32];
+
+            for(int i = 0; i < 32; i++)
+            {
+                final[i] = registros[i];
+            }
+
+            org.terminados.Enqueue(final);
+        }
+
         public void imprimir(ref Procesador p)
         {
             BindingList<int> data = new BindingList<int>();
@@ -510,6 +523,11 @@ namespace Proyecto_Arqui
         }
 
         private void P1_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Procesador_Load(object sender, EventArgs e)
         {
 
         }
