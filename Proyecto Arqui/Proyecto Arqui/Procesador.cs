@@ -326,7 +326,7 @@ namespace Proyecto_Arqui
                                             cacheDatos[posicionC * 6 + posEstado] = 1;
                                         }
                                         //escribo en memoria
-                                        if (Monitor.TryEnter(p.memoria))
+                                        if (Monitor.TryEnter(p.memoriaDatos))
                                         {
                                             try
                                             {
@@ -336,11 +336,11 @@ namespace Proyecto_Arqui
                                                     Console.WriteLine("SW: {0}. Reloj: {1}",w,reloj);
                                                     sincronizacion.SignalAndWait();
                                                 }
-                                                p.memoria[bloque, palabra] = datoEscribir;
+                                                p.memoriaDatos[bloque, palabra] = datoEscribir;
                                             }
                                             finally
                                             {
-                                                Monitor.Exit(p.memoria);
+                                                Monitor.Exit(p.memoriaDatos);
                                             }
                                         }
                                     }
