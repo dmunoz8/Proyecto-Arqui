@@ -161,7 +161,7 @@ namespace Proyecto_Arqui
                     while (quantumLocal > 0 && fin != 63)
                     {
                         instruccion = buscarInstruccion(ref p);
-                        PC += 4;
+                        //PC += 4;
                         switch (instruccion[0])
                         {
                             case 2:     // JR
@@ -176,14 +176,14 @@ namespace Proyecto_Arqui
                             case 4:     // BEQZ
                                 if (registros[instruccion[1]] == 0)
                                 {
-                                    PC += instruccion[3] * 4;
+                                    PC += (instruccion[3] * 4);
                                 }
                                 break;
 
                             case 5:     // BNEZ
                                 if (registros[instruccion[1]] != 0)
                                 {
-                                    PC += instruccion[3] * 4;
+                                    PC += (instruccion[3] * 4);
                                 }
                                 break;
 
@@ -271,14 +271,14 @@ namespace Proyecto_Arqui
 
             bool datoEnMiCache = false;
 
-            int datoEscribir = this.registros[numRegistro];
+            int datoEscribir = numRegistro; //this.registros[numRegistro];
 
             if (Monitor.TryEnter(a.cacheDatos))
             {
                 try
                 {
                     //verificar si esta en la cache del procesador a
-                    if (a.cacheDatos[posicionC * 6 + posEtiqueta] == dirMem)
+                    if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
                     {
                         
                         //si tiene el dato
@@ -295,7 +295,7 @@ namespace Proyecto_Arqui
                         try
                         {
                             //verificar si esta en la cache del procesador b
-                            if (b.cacheDatos[posicionC * 6 + posEtiqueta] == dirMem)
+                            if (b.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
                             {    //si tiene el dato
                                 if (b.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
                                 {
@@ -310,7 +310,7 @@ namespace Proyecto_Arqui
                                 try
                                 {
                                     //verificar si esta en mi cache
-                                    if (cacheDatos[posicionC * 6  + posEtiqueta] == dirMem)
+                                    if (cacheDatos[posicionC * 6  + posEtiqueta] == bloque) //dirMem)
                                     {    //si tiene el dato
                                         if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
                                         {
@@ -496,6 +496,7 @@ namespace Proyecto_Arqui
                 finally
                 {
                     Monitor.Exit(cacheInstrucciones);
+                    PC += 4;
                 }
             }
             else
