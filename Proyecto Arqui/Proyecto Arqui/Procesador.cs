@@ -137,13 +137,13 @@ namespace Proyecto_Arqui
         public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, Organizador p)
         {
             int[] instruccion = new int[4];
-            int fin = -1;
             int hilillos;
             //hay hilillos que correr?
             
             while (p.colaContexto.Count > 0)
             {
                 quantumLocal = quantum;
+                int fin = -1;
                 //int dirHilillo = p.direccionHilillo.Dequeue();
                 //contexto[32] = dirHilillo;
                 
