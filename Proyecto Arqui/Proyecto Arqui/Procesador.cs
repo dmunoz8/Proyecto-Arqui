@@ -180,7 +180,7 @@ namespace Proyecto_Arqui
                                 }
                                 break;
 
-                            case 5:     // BENZ
+                            case 5:     // BNEZ
                                 if (registros[instruccion[1]] != 0)
                                 {
                                     PC += instruccion[3] * 4;
@@ -212,7 +212,11 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
-                                ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                if(escribi == 0)
+                                {
+                                    PC -= 4;
+                                }
                                 break;
 
                             case 63:    // Codigo para terminar el programa
@@ -250,13 +254,13 @@ namespace Proyecto_Arqui
             sincronizacion.RemoveParticipant();
         }
 
-        private void ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
+        private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
 
             int palabra = calcularPalabra(dirMem);
             int bloque = calcularBloque(dirMem);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);
-            
+            int escribio = 0;
 
             int cantInvalidadas = 0;
             int cantCompartidos=0;
@@ -343,6 +347,7 @@ namespace Proyecto_Arqui
                                                 Monitor.Exit(p.memoriaDatos);
                                             }
                                         }
+                                        escribio = 1;
                                     }
                                 }
                                 finally
@@ -362,6 +367,7 @@ namespace Proyecto_Arqui
                     Monitor.Exit(a.cacheDatos);
                 }
             }
+            return escribio;
         }
 
         public void ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
