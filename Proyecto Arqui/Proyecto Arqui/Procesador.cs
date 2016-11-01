@@ -254,7 +254,7 @@ namespace Proyecto_Arqui
             sincronizacion.RemoveParticipant();
         }
 
-        private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
+        private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int datoEscribir, ref Organizador p)
         {
 
             int palabra = calcularPalabra(dirMem);
@@ -271,25 +271,35 @@ namespace Proyecto_Arqui
 
             bool datoEnMiCache = false;
 
-            int datoEscribir = numRegistro; //this.registros[numRegistro];
+            int _datoEscribir = datoEscribir; //this.registros[numRegistro];
 
-            if (Monitor.TryEnter(a.cacheDatos))
+            if (Monitor.TryEnter(p.memoriaDatos))
             {
                 try
                 {
-                    //verificar si esta en la cache del procesador a
-                    if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                    if (Monitor.TryEnter(a.cacheDatos))
                     {
-                        
-                        //si tiene el dato
-                        if (a.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
+                        try
                         {
-                            a.cacheDatos[posicionC * 6 + posEstado] = -1;
-                        }
-                        cantCompartidos++;
-                        cantInvalidadas++;
-                    }
+                            //verificar si esta en la cache del procesador a
+                            if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                            {
 
+                                //si tiene el dato
+                                if (a.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
+                                {
+                                    a.cacheDatos[posicionC * 6 + posEstado] = -1;
+                                }
+                                cantCompartidos++;
+                                cantInvalidadas++;
+                            }
+
+                        }
+                        finally
+                        {
+                            Monitor.Exit(a.cacheDatos);
+                        }
+                    }
                     if (Monitor.TryEnter(b.cacheDatos))
                     {
                         try
@@ -304,67 +314,47 @@ namespace Proyecto_Arqui
                                 cantCompartidos++;
                                 cantInvalidadas++;
                             }
-                            //verificar si lo tengo en mi cahe e invalidarlo
-                            if (Monitor.TryEnter(cacheDatos))
-                            {
-                                try
-                                {
-                                    //verificar si esta en mi cache
-                                    if (cacheDatos[posicionC * 6  + posEtiqueta] == bloque) //dirMem)
-                                    {    //si tiene el dato
-                                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
-                                        {
-                                            cacheDatos[posicionC * 6 + posEstado] = -1;
-                                        }
-                                        datoEnMiCache = true;
-                                    }
-                                    //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
-                                    //si el dato esta en mi cache lo escribo ahi y en memoria
-                                    //si no esta en mi cache solo escribo en memoria
-                                    if (cantInvalidadas == cantCompartidos)
-                                    {
-                                        if (datoEnMiCache)
-                                        {
-                                            //escribo en mi cache
-                                            cacheDatos[posicionC + palabra] = datoEscribir;
-                                            cacheDatos[posicionC * 6 + posEstado] = 1;
-                                        }
-                                        //escribo en memoria
-                                        if (Monitor.TryEnter(p.memoriaDatos))
-                                        {
-                                            try
-                                            {
-                                                for (int w = 0; w < 7; w++)
-                                                {
-                                                    //  Tarda 7 ciclos, se envían 7 señales
-                                                    Console.WriteLine("SW: {0}. Reloj: {1}",w,reloj);
-                                                    sincronizacion.SignalAndWait();
-                                                }
-                                                p.memoriaDatos[bloque, palabra] = datoEscribir;
-                                            }
-                                            finally
-                                            {
-                                                Monitor.Exit(p.memoriaDatos);
-                                            }
-                                        }
-                                        escribio = 1;
-                                    }
-                                }
-                                finally
-                                {
-                                    Monitor.Exit(cacheDatos);
-                                }
-                            }
+
                         }
                         finally
                         {
                             Monitor.Exit(b.cacheDatos);
                         }
                     }
-                }
+                    //verificar si esta en mi cache
+                    if (cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                    {    //si tiene el dato
+                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
+                        {
+                            cacheDatos[posicionC * 6 + posEstado] = -1;
+                        }
+                        datoEnMiCache = true;
+                    }
+                    //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+                    //si el dato esta en mi cache lo escribo ahi y en memoria
+                    //si no esta en mi cache solo escribo en memoria
+                    if (cantInvalidadas == cantCompartidos)
+                    {
+                        if (datoEnMiCache)
+                        {
+                            //escribo en mi cache
+                            cacheDatos[posicionC + palabra] = _datoEscribir;
+                            cacheDatos[posicionC * 6 + posEstado] = 1;
+                        }
+                        for (int w = 0; w < 7; w++)
+                        {
+                            //  Tarda 7 ciclos, se envían 7 señales
+                            Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
+                            sincronizacion.SignalAndWait();
+                        }
+                        p.memoriaDatos[bloque, palabra] = _datoEscribir;
+                        escribio = 1;
+                    }
+
+                    }
                 finally
                 {
-                    Monitor.Exit(a.cacheDatos);
+                    Monitor.Exit(p.memoriaDatos);
                 }
             }
             return escribio;
