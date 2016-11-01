@@ -208,7 +208,11 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 35:    // LW
-                                ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                int leyo = ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                if (leyo == 0)
+                                {
+                                    PC -= 4;
+                                }
                                 break;
 
                             case 43:    // SW
@@ -254,7 +258,7 @@ namespace Proyecto_Arqui
             sincronizacion.RemoveParticipant();
         }
 
-        private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int datoEscribir, ref Organizador p)
+        private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
 
             int palabra = calcularPalabra(dirMem);
@@ -271,7 +275,7 @@ namespace Proyecto_Arqui
 
             bool datoEnMiCache = false;
 
-            int _datoEscribir = datoEscribir; //this.registros[numRegistro];
+            int _datoEscribir = registros[numRegistro];
 
             if (Monitor.TryEnter(p.memoriaDatos))
             {
@@ -360,12 +364,12 @@ namespace Proyecto_Arqui
             return escribio;
         }
 
-        public void ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
+        public int ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
         {
             int palabra = calcularPalabra(direccionMemoria);
             int bloque = calcularBloque(direccionMemoria);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
-                                                                    //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
+            int leyo = 0;                                                        //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
 
             if (Monitor.TryEnter(cacheDatos))
             {
@@ -397,6 +401,8 @@ namespace Proyecto_Arqui
                                 cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
+
+                                leyo = 1;
                             }
                             finally
                             {
@@ -410,6 +416,8 @@ namespace Proyecto_Arqui
                     Monitor.Exit(cacheDatos);
                 }
             }
+
+            return leyo;
         }
         public int calcularBloque(int direccionMemoria)
         {
