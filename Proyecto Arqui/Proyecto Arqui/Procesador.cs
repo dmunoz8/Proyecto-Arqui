@@ -82,54 +82,63 @@ namespace Proyecto_Arqui
             int posicionC = posicionCache(bloque);
             int lengthMemoria = 0;
             int i = -1;
-            if (Monitor.TryEnter(cacheInstrucciones))
+            bool leyo = false;
+            while (!leyo)
             {
-                try
+                if (Monitor.TryEnter(cacheInstrucciones))
                 {
-                    switch (posicionC)
+                    try
                     {
-                        case 0:
-                            i = 0;
-                            break;
-
-                        case 1:
-                            i = 18;
-                            break;
-
-                        case 2:
-                            i = 36;
-                            break;
-
-                        case 3:
-                            i = 54;
-                            break;
-                    }
-                    if (Monitor.TryEnter(p.memoria))
-                    {
-                        try
+                        switch (posicionC)
                         {
-                            /* for (int w = 0; w < 28; w++)
-                             {
-                                 //de caché a memoria = 28 ciclos
-                                 //sincronizacion.SignalAndWait();
-                             }*/
-                                while (lengthMemoria < 16)
+                            case 0:
+                                i = 0;
+                                break;
+
+                            case 1:
+                                i = 18;
+                                break;
+
+                            case 2:
+                                i = 36;
+                                break;
+
+                            case 3:
+                                i = 54;
+                                break;
+                        }
+                        if (Monitor.TryEnter(p.memoria))
+                        {
+                            try
                             {
-                                try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; }
-                                catch{ Console.WriteLine("Bloque: {0}, length: {1}",bloque, lengthMemoria); }
-                                lengthMemoria++;
-                                i++;
+                                for (int w = 0; w < 28; w++)
+                                {
+                                    //de memoria a caché = 28 ciclos
+                                    sincronizacion.SignalAndWait();
+                                }
+                                while (lengthMemoria < 16)
+                                {
+                                    try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; }
+                                    catch { Console.WriteLine("Bloque: {0}, length: {1}", bloque, lengthMemoria); }
+                                    lengthMemoria++;
+                                    i++;
+                                }
+                            }
+                            finally
+                            {
+                                leyo = true;
+                                Monitor.Exit(p.memoria);
                             }
                         }
-                        finally
+                        else
                         {
-                            Monitor.Exit(p.memoria);
+                            sincronizacion.SignalAndWait();
                         }
                     }
-                }
-                finally
-                {
-                    Monitor.Exit(cacheInstrucciones);
+                    finally
+                    {
+                        Monitor.Exit(cacheInstrucciones);
+                    }
                 }
             }
         }
@@ -139,20 +148,20 @@ namespace Proyecto_Arqui
             int[] instruccion = new int[4];
             int hilillos;
             //hay hilillos que correr?
-            
+
             while (p.colaContexto.Count > 0)
             {
                 quantumLocal = quantum;
                 int fin = -1;
                 //int dirHilillo = p.direccionHilillo.Dequeue();
                 //contexto[32] = dirHilillo;
-                
+
                 mut.WaitOne();
                 hilillos = p.colaContexto.Count;
                 if (hilillos > 0)
-                {                   
+                {
                     int[] contextoACargar = p.colaContexto.Dequeue();
-                    if(contextoACargar == null)
+                    if (contextoACargar == null)
                     {
                         Console.WriteLine("Hilillos: {0}", hilillos);
                     }
@@ -188,6 +197,10 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 8:     // DADDI
+                                if (instruccion[2] == 31)
+                                {
+                                    Console.WriteLine();
+                                }
                                 registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
                                 break;
 
@@ -217,7 +230,7 @@ namespace Proyecto_Arqui
 
                             case 43:    // SW
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                if(escribi == 0)
+                                if (escribi == 0)
                                 {
                                     PC -= 4;
                                 }
@@ -246,12 +259,12 @@ namespace Proyecto_Arqui
                         int[] contextoGuardar1 = guardarContexto();
                         mut.WaitOne();
                         p.colaContexto.Enqueue(contextoGuardar1);
-                        mut.ReleaseMutex();                        
+                        mut.ReleaseMutex();
                     }
                 }
                 else
                 {
-                    mut.ReleaseMutex();                    
+                    mut.ReleaseMutex();
                 }
             }
             sincronizacion.SignalAndWait();
@@ -261,13 +274,14 @@ namespace Proyecto_Arqui
         private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
 
+
             int palabra = calcularPalabra(dirMem);
             int bloque = calcularBloque(dirMem);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);
             int escribio = 0;
 
             int cantInvalidadas = 0;
-            int cantCompartidos=0;
+            int cantCompartidos = 0;
 
             //posiciones de la cache
             int posEtiqueta = 4;
@@ -276,7 +290,10 @@ namespace Proyecto_Arqui
             bool datoEnMiCache = false;
 
             int _datoEscribir = registros[numRegistro];
-
+            if (numRegistro == 31)
+            {
+                Console.Out.WriteLine("Escribe: {0}", _datoEscribir);
+            }
             if (Monitor.TryEnter(p.memoriaDatos))
             {
                 try
@@ -355,11 +372,15 @@ namespace Proyecto_Arqui
                         escribio = 1;
                     }
 
-                    }
+                }
                 finally
                 {
                     Monitor.Exit(p.memoriaDatos);
                 }
+            }
+            if (_datoEscribir == 99 || _datoEscribir == 88)
+            {
+                Console.WriteLine();
             }
             return escribio;
         }
@@ -369,7 +390,7 @@ namespace Proyecto_Arqui
             int palabra = calcularPalabra(direccionMemoria);
             int bloque = calcularBloque(direccionMemoria);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
-            int leyo = 0;                                                        //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
+            int leyo = 0;                       //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
 
             if (Monitor.TryEnter(cacheDatos))
             {
@@ -396,7 +417,7 @@ namespace Proyecto_Arqui
                                 //Se sube a caché y se carga en el registro
                                 for (int i = 0; i < 4; i++)
                                 {
-                                    cacheDatos[posicionC * 6 + i] = p.memoriaDatos[bloque,i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
+                                    cacheDatos[posicionC * 6 + i] = p.memoriaDatos[bloque, i]; //cambiar a estructura de memoria de datos!!!!!!!!!!
                                 }
                                 cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
@@ -440,23 +461,23 @@ namespace Proyecto_Arqui
         {
             return (direccionMemoria % 16) / 4;
         }
-        private void cargarContexto(int [] contextoCargar)
+        private void cargarContexto(int[] contextoCargar)
         {
-           
+
             for (int i = 0; i < 32; i++)
             {
                 registros[i] = contextoCargar[i];
             }
             PC = contextoCargar[32];
             RL = contextoCargar[33];
-            relojInicio= contextoCargar[34];
-            relojFin=contextoCargar[35];
+            relojInicio = contextoCargar[34];
+            relojFin = contextoCargar[35];
 
         }
 
-        private int []  guardarContexto()
+        private int[] guardarContexto()
         {
-            int[] contextoGuardar =new int[36];
+            int[] contextoGuardar = new int[36];
             for (int i = 0; i < 32; i++)
             {
                 contextoGuardar[i] = registros[i];
@@ -484,6 +505,7 @@ namespace Proyecto_Arqui
                     if (cacheInstrucciones[pos * 18 + 16] != bloque)    // Hay fallo de cache?
                     {
                         pasarInstrMemoriaCache(ref p);
+                        //if(pasarInstrMemoriaCache(ref p)) leyo = true;
                     }
 
                     for (int i = 0; i < 4; i++, desplazamiento++)
@@ -497,19 +519,14 @@ namespace Proyecto_Arqui
                     PC += 4;
                 }
             }
-            else
-            {
-                //PC -= 4;
-                //libero
-            }
             return instruccion;
         }
 
         public void terminarHilillo(ref Organizador org)
         {
-            int [] final = new int[32];
+            int[] final = new int[32];
 
-            for(int i = 0; i < 32; i++)
+            for (int i = 0; i < 32; i++)
             {
                 final[i] = registros[i];
             }
