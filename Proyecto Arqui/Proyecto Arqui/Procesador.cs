@@ -517,12 +517,28 @@ namespace Proyecto_Arqui
 
         public void terminarHilillo(ref Organizador org)
         {
-            int[] final = new int[32];
+            int[] final = new int[57];
+            int espacios = 0;
 
             for (int i = 0; i < 32; i++)
             {
                 final[i] = registros[i];
             }
+
+            for (int j = 0; j < 24; j++)
+            {
+                if (espacios < 4)
+                {
+                    final[j + 32] = cacheDatos[j];
+                }
+                if(espacios == 5)
+                {
+                    espacios = 0;
+                }
+                espacios++;
+            }
+
+            final[56] = reloj;
 
             org.terminados.Enqueue(final);
         }

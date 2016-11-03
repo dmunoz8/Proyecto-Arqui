@@ -58,6 +58,17 @@ namespace Proyecto_Arqui
 
                 regs.Text += '\n';
                 regs.Text += '\n';
+
+                for (int g = 32; g < 56; g++)
+                {
+                    datos.Text += ter[g] + " ";
+                }
+
+                datos.Text += '\n';
+                datos.Text += '\n';
+
+                ciclos.Text += ter[56];
+                ciclos.Text += '\n';
             }
             
 
