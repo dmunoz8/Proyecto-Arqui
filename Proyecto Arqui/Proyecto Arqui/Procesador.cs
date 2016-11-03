@@ -66,14 +66,14 @@ namespace Proyecto_Arqui
             cacheInstrucciones[53] = -1;
             cacheInstrucciones[71] = -1;
 
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < 24; i++)
             {
                 cacheDatos[i] = 0;
             }
-            cacheDatos[2] = -1;  // -1 = invalido, 1 = valido
-            cacheDatos[5] = -1;
-            cacheDatos[8] = -1;
+            cacheDatos[5] = -1;  // -1 = invalido, 1 = valido
             cacheDatos[11] = -1;
+            cacheDatos[17] = -1;
+            cacheDatos[23] = -1;
         }
 
         public void pasarInstrMemoriaCache(ref Organizador p)

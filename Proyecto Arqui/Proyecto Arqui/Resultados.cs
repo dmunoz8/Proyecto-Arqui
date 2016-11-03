@@ -39,14 +39,14 @@ namespace Proyecto_Arqui
                 mem.Text += '\n';
             }
 
-            for (int i = 24; i < 64; i++)
+            /*for (int i = 24; i < 64; i++)
             {
                 for (int j = 0; j < 16; j++)
                 {
                     mem.Text += org.memoria[i, j].ToString() + " ";
                 }
                 mem.Text += '\n';
-            }
+            }*/
 
             while (org.terminados.Count > 0)
             {
