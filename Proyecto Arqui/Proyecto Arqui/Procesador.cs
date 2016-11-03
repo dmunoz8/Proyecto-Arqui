@@ -197,10 +197,6 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 8:     // DADDI
-                                if (instruccion[2] == 31)
-                                {
-                                    Console.WriteLine();
-                                }
                                 registros[instruccion[2]] = registros[instruccion[1]] + instruccion[3];
                                 break;
 
@@ -247,7 +243,7 @@ namespace Proyecto_Arqui
                         //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
                         //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nInst: {2} {3} {4} {5}",
                         //reloj, quantumLocal, instruccion[0], instruccion[1], instruccion[2], instruccion[3]);
-                        Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nPC: {2}", reloj, quantumLocal, PC);
+                        //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nPC: {2}", reloj, quantumLocal, PC);
 
                         sincronizacion.SignalAndWait();
                         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -365,7 +361,7 @@ namespace Proyecto_Arqui
                         for (int w = 0; w < 7; w++)
                         {
                             //  Tarda 7 ciclos, se envían 7 señales
-                            Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
+                            //Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
                             sincronizacion.SignalAndWait();
                         }
                         p.memoriaDatos[bloque, palabra] = _datoEscribir;
@@ -377,10 +373,6 @@ namespace Proyecto_Arqui
                 {
                     Monitor.Exit(p.memoriaDatos);
                 }
-            }
-            if (_datoEscribir == 99 || _datoEscribir == 88)
-            {
-                Console.WriteLine();
             }
             return escribio;
         }
@@ -400,6 +392,7 @@ namespace Proyecto_Arqui
                     if (cacheDatos[posicionC * 6 + 4] == bloque && cacheDatos[posicionC * 6 + 5] != -1)
                     {
                         registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];//carga al registro
+                        leyo = 1;
                     }
                     else
                     {
@@ -411,7 +404,7 @@ namespace Proyecto_Arqui
                                 for (int w = 0; w < 28; w++)
                                 {
                                     //  Tarda 28 ciclos, se envían 28 señales
-                                    Console.WriteLine("LW: {0}. Reloj: {1}", w, reloj);
+                                    //Console.WriteLine("LW: {0}. Reloj: {1}", w, reloj);
                                     sincronizacion.SignalAndWait();
                                 }
                                 //Se sube a caché y se carga en el registro

@@ -123,7 +123,10 @@ namespace Proyecto_Arqui
                 procesador3.reloj = reloj;
 
                 //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
-                Console.WriteLine("Organizador. Reloj: {0}",reloj);
+                if (reloj % 1000 == 0)
+                {
+                    Console.WriteLine("Organizador. Reloj: {0}", reloj);
+                }
                 sincronizacion.SignalAndWait();                
             }
         }
