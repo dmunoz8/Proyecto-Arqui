@@ -538,7 +538,7 @@ namespace Proyecto_Arqui
                 espacios++;
             }
 
-            final[56] = reloj;
+            final[56] = duracion;
 
             org.terminados.Enqueue(final);
         }
