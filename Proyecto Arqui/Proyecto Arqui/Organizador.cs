@@ -217,6 +217,7 @@ namespace Proyecto_Arqui
                 a[i] = 0;
             }
             a[32] = pc; //32 es el PC
+            a[34] = 0;  //duracion del hilillo
             colaContexto.Enqueue(a);
         }
 

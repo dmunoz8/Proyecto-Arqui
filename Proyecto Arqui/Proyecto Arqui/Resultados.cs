@@ -51,18 +51,14 @@ namespace Proyecto_Arqui
             while (org.terminados.Count > 0)
             {
                 int[] ter = org.terminados.Dequeue();
-                for (int g = 0; g < 32; g++)
+                for (int g = 0; g < 33; g++)
                 {
                     regs.Text += ter[g] + " ";
                 }
-
                 regs.Text += '\n';
                 regs.Text += '\n';
             }
-            
-
-                Visible = true;
+            Visible = true;
         }
-
     }
 }

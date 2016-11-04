@@ -16,18 +16,17 @@ namespace Proyecto_Arqui
     {
         private int numeroProcesador;
         public int[] registros; //32 (R0 - R31)
-        public int[] contexto; //36 R0-R31, PC, PR relojInicio, relojFin 
+        public int[] contexto; //35 R0-R31, PC, RL, duracion 
         public int[] cacheDatos; // 4 bloques de una palabra
         public int[] cacheInstrucciones; // 4 bloques de 4 palabras
         public Queue<int> hilillos;
         public Barrier sincronizacion;
-        public static Mutex mut;
+        public static Mutex varsMutex;
         public int quantumLocal;
         public int reloj;
         public int RL;
         public int PC;
-        public int relojInicio;
-        public int relojFin;
+        public int duracion;
 
         public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
@@ -35,16 +34,17 @@ namespace Proyecto_Arqui
             InitializeComponent();
             quantumLocal = 0;
             reloj = 0;
+            duracion = 0;
             PC = 0;
             this.sincronizacion = sincronizacion;
-            mut = new Mutex();
+            varsMutex = new Mutex();
         }
 
         //inicializador de registros y caches de datos de los tres procesadores 
         public void inicializarProcesador()
         {
             registros = new int[32];
-            contexto = new int[36];
+            contexto = new int[35];
             cacheInstrucciones = new int[72];
             cacheDatos = new int[24]; //4*(1palabra(4 enteros)+2campos de control) --> 4 * valor, etiqueta y estado.
 
@@ -54,7 +54,10 @@ namespace Proyecto_Arqui
                 contexto[i] = 0;
             }
 
-            contexto[32] = 0;
+            contexto[32] = 0;  //PC
+            contexto[33] = 0; //RL
+            contexto[34] = 0;  //Duracion
+
 
             for (int i = 0; i < 72; i++)
             {
@@ -146,17 +149,15 @@ namespace Proyecto_Arqui
         public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, Organizador p)
         {
             int[] instruccion = new int[4];
-            int hilillos;
+            int hilillos = 0;
+            int relojInicio = 0;
+            int relojFinal = 0;
             //hay hilillos que correr?
-
             while (p.colaContexto.Count > 0)
             {
                 quantumLocal = quantum;
                 int fin = -1;
-                //int dirHilillo = p.direccionHilillo.Dequeue();
-                //contexto[32] = dirHilillo;
-
-                mut.WaitOne();
+                varsMutex.WaitOne();
                 hilillos = p.colaContexto.Count;
                 if (hilillos > 0)
                 {
@@ -165,8 +166,9 @@ namespace Proyecto_Arqui
                     {
                         Console.WriteLine("Hilillos: {0}", hilillos);
                     }
-                    mut.ReleaseMutex();
+                    varsMutex.ReleaseMutex();
                     cargarContexto(contextoACargar);//saca un contexto de la cola
+                    relojInicio = reloj;
                     while (quantumLocal > 0 && fin != 63)
                     {
                         instruccion = buscarInstruccion(ref p);
@@ -234,33 +236,35 @@ namespace Proyecto_Arqui
 
                             case 63:    // Codigo para terminar el programa
                                 fin = 63;
-                                terminarHilillo(ref p);
+                                relojFinal = reloj;
+                                duracion += (relojFinal - relojInicio);
+                                terminarHilillo(duracion, ref p);
                                 break;
                         }
                         quantumLocal--;
-                        //reloj++;
+                        
                         //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
                         //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
-                        //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nInst: {2} {3} {4} {5}",
-                        //reloj, quantumLocal, instruccion[0], instruccion[1], instruccion[2], instruccion[3]);
+                        
                         //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nPC: {2}", reloj, quantumLocal, PC);
 
                         sincronizacion.SignalAndWait();
-                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        //imprimir(ref p);
+                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                        
                     }
 
                     if (fin != 63)
                     {
+                        relojFinal = reloj;
+                        duracion += (relojFinal - relojInicio);
                         int[] contextoGuardar1 = guardarContexto();
-                        mut.WaitOne();
+                        varsMutex.WaitOne();
                         p.colaContexto.Enqueue(contextoGuardar1);
-                        mut.ReleaseMutex();
+                        varsMutex.ReleaseMutex();
                     }
                 }
                 else
                 {
-                    mut.ReleaseMutex();
+                    varsMutex.ReleaseMutex();
                 }
             }
             sincronizacion.SignalAndWait();
@@ -269,8 +273,6 @@ namespace Proyecto_Arqui
 
         private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
-
-
             int palabra = calcularPalabra(dirMem);
             int bloque = calcularBloque(dirMem);          // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);
@@ -463,22 +465,20 @@ namespace Proyecto_Arqui
             }
             PC = contextoCargar[32];
             RL = contextoCargar[33];
-            relojInicio = contextoCargar[34];
-            relojFin = contextoCargar[35];
+            duracion = contextoCargar[34];
 
         }
 
         private int[] guardarContexto()
         {
-            int[] contextoGuardar = new int[36];
+            int[] contextoGuardar = new int[35];
             for (int i = 0; i < 32; i++)
             {
                 contextoGuardar[i] = registros[i];
             }
             contextoGuardar[32] = PC;
             contextoGuardar[33] = RL;
-            contextoGuardar[34] = 0;
-            contextoGuardar[35] = 0;
+            contextoGuardar[34] = duracion;
 
             return contextoGuardar;
 
@@ -515,15 +515,15 @@ namespace Proyecto_Arqui
             return instruccion;
         }
 
-        public void terminarHilillo(ref Organizador org)
+        public void terminarHilillo(int duracion, ref Organizador org)
         {
-            int[] final = new int[32];
+            int[] final = new int[33];
 
             for (int i = 0; i < 32; i++)
             {
                 final[i] = registros[i];
             }
-
+            final[32] = duracion;     //numero de ciclos que durpo ejecutandose.
             org.terminados.Enqueue(final);
         }
 
