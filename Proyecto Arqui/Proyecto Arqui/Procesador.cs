@@ -234,6 +234,17 @@ namespace Proyecto_Arqui
                                 }
                                 break;
 
+                            case 50: //LL
+                                int leyoLL= ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                if (leyoLL == 0)
+                                {
+                                    PC -= 4;
+                                }
+                                break;
+                            case 51: //SC
+                                int coincideRL= ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                break;
+
                             case 63:    // Codigo para terminar el programa
                                 fin = 63;
                                 relojFinal = reloj;
@@ -312,6 +323,9 @@ namespace Proyecto_Arqui
                                 cantCompartidos++;
                                 cantInvalidadas++;
                             }
+                            if (a.RL == dirMem) {
+                                a.RL = -1;
+                            }
 
                         }
                         finally
@@ -332,6 +346,10 @@ namespace Proyecto_Arqui
                                 }
                                 cantCompartidos++;
                                 cantInvalidadas++;
+                            }
+                            if (b.RL == dirMem)
+                            {
+                                b.RL = -1;
                             }
 
                         }
@@ -417,7 +435,6 @@ namespace Proyecto_Arqui
                                 cacheDatos[posicionC * 6 + 4] = bloque; //Etiqueta
                                 cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
-
                                 leyo = 1;
                             }
                             finally
@@ -426,6 +443,7 @@ namespace Proyecto_Arqui
                             }
                         }
                     }
+                    RL=direccionMemoria;
                 }
                 finally
                 {
@@ -434,6 +452,37 @@ namespace Proyecto_Arqui
             }
 
             return leyo;
+        }
+        public int ejecutarSC(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
+        {
+            int _dirMem = dirMem;
+            int escribio = 0;
+            if (Monitor.TryEnter(cacheDatos))
+            {
+                try
+                {
+                    if (RL==_dirMem)
+                    {
+                        escribio = ejecutarSW(ref a, ref b, dirMem, numRegistro, ref p);
+                        if (escribio == 1)
+                        {
+                            PC -= 4;
+                        }
+
+                    }
+                    else {
+                        registros[numRegistro] = 0;
+                    }
+
+                    RL = -1;
+
+                }
+                finally
+                {
+                    Monitor.Exit(cacheDatos);
+                }
+            }
+            return escribio;
         }
         public int calcularBloque(int direccionMemoria)
         {
@@ -464,7 +513,7 @@ namespace Proyecto_Arqui
                 registros[i] = contextoCargar[i];
             }
             PC = contextoCargar[32];
-            RL = contextoCargar[33];
+            RL = -1;
             duracion = contextoCargar[34];
 
         }
