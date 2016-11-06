@@ -23,6 +23,7 @@ namespace Proyecto_Arqui
         int _CANTHILILLOS;
         int _QUANTUM;
         int reloj;
+        int impresiones = 0;
         //Resultados resultado;
         Procesador principal;
         Procesador procesador1;

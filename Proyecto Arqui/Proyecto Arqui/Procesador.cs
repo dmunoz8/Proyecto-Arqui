@@ -236,11 +236,12 @@ namespace Proyecto_Arqui
 
                             case 50: //LL
                                 int leyoLL= ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                if (leyoLL == 0)
+                              /*  if (leyoLL == 0)
                                 {
                                     PC -= 4;
-                                }
+                                } */
                                 break;
+
                             case 51: //SC
                                 int coincideRL= ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                                 break;
@@ -413,6 +414,7 @@ namespace Proyecto_Arqui
                     {
                         registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];//carga al registro
                         leyo = 1;
+                        RL = direccionMemoria;
                     }
                     else
                     {
@@ -436,14 +438,14 @@ namespace Proyecto_Arqui
                                 cacheDatos[posicionC * 6 + 5] = 1;  //Bloque valido
                                 registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
                                 leyo = 1;
+                                RL = direccionMemoria;
                             }
                             finally
                             {
                                 Monitor.Exit(p.memoria);
                             }
                         }
-                    }
-                    RL=direccionMemoria;
+                    }                
                 }
                 finally
                 {
@@ -464,18 +466,17 @@ namespace Proyecto_Arqui
                     if (RL==_dirMem)
                     {
                         escribio = ejecutarSW(ref a, ref b, dirMem, numRegistro, ref p);
-                        if (escribio == 1)
+                        /*if (escribio == 1)
                         {
                             PC -= 4;
-                        }
+                        } */
 
                     }
-                    else {
+                    else 
+                    {
                         registros[numRegistro] = 0;
                     }
-
                     RL = -1;
-
                 }
                 finally
                 {
@@ -484,6 +485,7 @@ namespace Proyecto_Arqui
             }
             return escribio;
         }
+
         public int calcularBloque(int direccionMemoria)
         {
             int bloque = direccionMemoria / 16;
