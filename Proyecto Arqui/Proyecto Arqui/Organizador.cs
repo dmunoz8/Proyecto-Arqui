@@ -168,45 +168,48 @@ namespace Proyecto_Arqui
                 int fila = 24;
                 int col = 0;
                 foreach (string files in Directory.EnumerateFiles(path, "*.txt"))
-                { 
+                {
                     string contents = File.ReadAllText(files);
                     string[] instrucciones = contents.Split('\n');
-                    foreach (string instruccion in instrucciones)
+                    for (int i = 0; i < instrucciones.Length; i++)
                     {
-                        if (instruccion == instrucciones.First())
                         {
-                            direccionHilillo.Enqueue(fila * 16 + col);
-
-                            llenarCola(fila * 16 + col);
-                        }
-                        if(col == 16)
-                        {
-                            col = 0;
-                            fila++;
-                        }
-
-                        string[] codigos = instruccion.Split(' ');
-                        for (int i = 0; i < codigos.Length; i++)
-                        {
-                            if (col < 16)
+                            if (i == 0)
                             {
-                                memoria[fila, col] = Int32.Parse(codigos[i]);
-                                col++;
+                                direccionHilillo.Enqueue(fila * 16 + col);
+
+                                llenarCola(fila * 16 + col);
                             }
-                            else
+                            if (col == 16)
                             {
-                                fila++;
                                 col = 0;
+                                fila++;
+                            }
+
+                            string[] codigos = instrucciones[i].Split(' ');
+                            for (int k = 0; k < codigos.Length; k++)
+                            {
+                                if (col < 16)
+                                {
+                                    memoria[fila, col] = Int32.Parse(codigos[k]);
+                                    col++;
+                                }
+                                else
+                                {
+                                    fila++;
+                                    col = 0;
+                                }
                             }
                         }
                     }
+                    //int valor = Int32.Parse(contents);
+                    //    data.Add(valor);
+                    //    CD1.DataSource = data;
                 }
-                //int valor = Int32.Parse(contents);
-                //    data.Add(valor);
-                //    CD1.DataSource = data;
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 

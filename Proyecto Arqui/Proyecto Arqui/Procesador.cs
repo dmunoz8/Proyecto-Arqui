@@ -153,8 +153,10 @@ namespace Proyecto_Arqui
             int relojInicio = 0;
             int relojFinal = 0;
             //hay hilillos que correr?
+            varsMutex.WaitOne();
             while (p.colaContexto.Count > 0)
             {
+                varsMutex.ReleaseMutex();
                 quantumLocal = quantum;
                 int fin = -1;
                 varsMutex.WaitOne();
@@ -227,6 +229,10 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
+                                if(instruccion[1] == 0 && instruccion[2]==0 && instruccion[3] == 260)
+                                {
+                                    Console.WriteLine();
+                                }
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                                 if (escribi == 0)
                                 {
@@ -278,7 +284,9 @@ namespace Proyecto_Arqui
                 {
                     varsMutex.ReleaseMutex();
                 }
+                varsMutex.WaitOne();
             }
+            varsMutex.ReleaseMutex();
             sincronizacion.SignalAndWait();
             sincronizacion.RemoveParticipant();
         }
