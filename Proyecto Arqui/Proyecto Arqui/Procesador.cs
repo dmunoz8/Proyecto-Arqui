@@ -229,9 +229,9 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
-                                if(instruccion[1] == 0 && instruccion[2]==0 && instruccion[3] == 260)
+                                if(instruccion[0] == 43 && instruccion[1] == 0 && instruccion[2]==0)
                                 {
-                                    Console.WriteLine();
+                                    Console.WriteLine("hilo: " + registros[31] + "liberando candado de posicion "+instruccion[3] );
                                 }
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                                 if (escribi == 0)
@@ -241,15 +241,22 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 50: //LL
+                                
+                                // Console.WriteLine("hilo  "+registros[31]+" haciendo LL en registro :"+ instruccion[2] + " ....de  pos de memoria"+ registros[instruccion[1]] + instruccion[3]);                           
                                 int leyoLL= ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                              /*  if (leyoLL == 0)
-                                {
-                                    PC -= 4;
-                                } */
+                                if (leyoLL==1) {
+                                    //Console.WriteLine("hilo  " + registros[31] +  " --->   Registro " + instruccion[2] +" = " + registros[instruccion[2]]);
+                                }
+
                                 break;
 
-                            case 51: //SC
-                                int coincideRL= ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                            case 51: //SC;
+                               // int dirMemo = (registros[instruccion[1]] + instruccion[3]);
+                               // Console.WriteLine("hilo  " + registros[31] + " iniciando SC en  pos de memoria: " + dirMemo );
+
+                               
+                                int coincideRL = ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+
                                 break;
 
                             case 63:    // Codigo para terminar el programa
@@ -423,6 +430,8 @@ namespace Proyecto_Arqui
                         registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];//carga al registro
                         leyo = 1;
                         RL = direccionMemoria;
+                       // Console.WriteLine("hilo  " + registros[31] +"----> RL= "+ RL);
+
                     }
                     else
                     {
@@ -447,6 +456,7 @@ namespace Proyecto_Arqui
                                 registros[numeroRegistro] = cacheDatos[posicionC * 6 + palabra];
                                 leyo = 1;
                                 RL = direccionMemoria;
+                                //Console.WriteLine("hilo  " + registros[31] + "----> RL= " + RL);
                             }
                             finally
                             {
@@ -474,16 +484,19 @@ namespace Proyecto_Arqui
                     if (RL==_dirMem)
                     {
                         escribio = ejecutarSW(ref a, ref b, dirMem, numRegistro, ref p);
-                        /*if (escribio == 1)
-                        {
-                            PC -= 4;
-                        } */
-
+                        if (escribio == 1)
+                        {                          
+                            registros[numRegistro] = 1;
+                        }
+                        else {
+                            registros[numRegistro] = 0;
+                        }
                     }
                     else 
                     {
                         registros[numRegistro] = 0;
                     }
+                    //Console.WriteLine("hilo  " + registros[31] + " intento SC en  pos de memoria: " + dirMem + "   Registro: " + numRegistro + " = " + registros[numRegistro]);
                     RL = -1;
                 }
                 finally
