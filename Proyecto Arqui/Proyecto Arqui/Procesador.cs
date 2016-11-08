@@ -317,10 +317,6 @@ namespace Proyecto_Arqui
             bool datoEnMiCache = false;
 
             int _datoEscribir = registros[numRegistro];
-            if (numRegistro == 31)
-            {
-                Console.Out.WriteLine("Escribe: {0}", _datoEscribir);
-            }
             if (Monitor.TryEnter(p.memoriaDatos))
             {
                 try
@@ -405,13 +401,11 @@ namespace Proyecto_Arqui
                                         for (int w = 0; w < 7; w++)
                                         {
                                             //  Tarda 7 ciclos, se envían 7 señales
-                                            //Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
                                             sincronizacion.SignalAndWait();
                                         }
                                         p.memoriaDatos[bloque, palabra] = _datoEscribir;
                                         escribio = 1;
                                     }
-
                         }
                         finally
                         {
