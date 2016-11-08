@@ -229,11 +229,12 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
-                                if(instruccion[0] == 43 && instruccion[1] == 0 && instruccion[2]==0)
+                                if(instruccion[0] == 43 && registros[instruccion[1]] + instruccion[3] == 176)
                                 {
-                                    Console.WriteLine("hilo: " + registros[31] + "liberando candado de posicion "+instruccion[3] );
+                                    Console.WriteLine( "liberando candado de posicion "+instruccion[3] );
                                 }
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                                //Console.WriteLine("haciendo store en pos " + registros[instruccion[1]] + instruccion[3]);
                                 if (escribi == 0)
                                 {
                                     PC -= 4;
@@ -307,6 +308,7 @@ namespace Proyecto_Arqui
 
             int cantInvalidadas = 0;
             int cantCompartidos = 0;
+            int cantCaches = 0;
 
             //posiciones de la cache
             int posEtiqueta = 4;
@@ -327,6 +329,7 @@ namespace Proyecto_Arqui
                     {
                         try
                         {
+                            cantCaches++;
                             //verificar si esta en la cache del procesador a
                             if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
                             {
@@ -353,6 +356,7 @@ namespace Proyecto_Arqui
                     {
                         try
                         {
+                            cantCaches++;
                             //verificar si esta en la cache del procesador b
                             if (b.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
                             {    //si tiene el dato
@@ -374,34 +378,45 @@ namespace Proyecto_Arqui
                             Monitor.Exit(b.cacheDatos);
                         }
                     }
-                    //verificar si esta en mi cache
-                    if (cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
-                    {    //si tiene el dato
-                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
-                        {
-                            cacheDatos[posicionC * 6 + posEstado] = -1;
-                        }
-                        datoEnMiCache = true;
-                    }
-                    //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
-                    //si el dato esta en mi cache lo escribo ahi y en memoria
-                    //si no esta en mi cache solo escribo en memoria
-                    if (cantInvalidadas == cantCompartidos)
+                    if (Monitor.TryEnter(cacheDatos))
                     {
-                        if (datoEnMiCache)
+                        try
                         {
-                            //escribo en mi cache
-                            cacheDatos[posicionC + palabra] = _datoEscribir;
-                            cacheDatos[posicionC * 6 + posEstado] = 1;
+                            //verificar si esta en mi cache
+                            if (cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                                    {    //si tiene el dato
+                                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
+                                        {
+                                            cacheDatos[posicionC * 6 + posEstado] = -1;
+                                        }
+                                        datoEnMiCache = true;
+                                    }
+                                    //verificar si obtuve los recursos de las otras dos para poder escribir  en memoria
+                                    //si el dato esta en mi cache lo escribo ahi y en memoria
+                                    //si no esta en mi cache solo escribo en memoria
+                                    if (cantCaches == 2)
+                                    {
+                                        if (datoEnMiCache)
+                                        {
+                                            //escribo en mi cache
+                                            cacheDatos[posicionC + palabra] = _datoEscribir;
+                                            cacheDatos[posicionC * 6 + posEstado] = 1;
+                                        }
+                                        for (int w = 0; w < 7; w++)
+                                        {
+                                            //  Tarda 7 ciclos, se envían 7 señales
+                                            //Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
+                                            sincronizacion.SignalAndWait();
+                                        }
+                                        p.memoriaDatos[bloque, palabra] = _datoEscribir;
+                                        escribio = 1;
+                                    }
+
                         }
-                        for (int w = 0; w < 7; w++)
+                        finally
                         {
-                            //  Tarda 7 ciclos, se envían 7 señales
-                            //Console.WriteLine("SW: {0}. Reloj: {1}", w, reloj);
-                            sincronizacion.SignalAndWait();
+                            Monitor.Exit(cacheDatos);
                         }
-                        p.memoriaDatos[bloque, palabra] = _datoEscribir;
-                        escribio = 1;
                     }
 
                 }
