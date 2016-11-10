@@ -14,30 +14,34 @@ namespace Proyecto_Arqui
 {
     public class Organizador
     {
-        public int[,] memoriaDatos;
-        public int[,] memoria; //64*16 = 1024 bytes
+        public int[,] memoriaDatos; //Estructura para la memoria de Datos
+        public int[,] memoria; //Estructura para la memoria de Instrucciones
         public Queue<int> direccionHilillo;  //direccion de donde empiezan las intrucciones de cada hilillo
-        public Queue<int []> colaContexto;
-        public Queue<int[]> terminados;
+        public Queue<int []> colaContexto; //Cola que guarda los contextos de los hilillos cuando no se encuentren en ejecucion en algun procesador
+        public Queue<int[]> terminados; //Cola de resultados para los hilillos que van terminando
         
-        int _CANTHILILLOS;
-        int _QUANTUM;
-        int reloj;
+        int _CANTHILILLOS; //Cantidad de hilos a ejecutar
+        int _QUANTUM; //Quantum dado por el usuario
+        int reloj; //reloj en comun de los procesadores
         int impresiones = 0;
-        //Resultados resultado;
+
         Procesador principal;
         Procesador procesador1;
         Procesador procesador2;
         Procesador procesador3;
         public Barrier sincronizacion;
 
+        /*Constructor
+         * Inicializa los procesadores, la memoria y carga las instrucciones de cada hilo segun el path que dio el usuario
+         * REQ: La cantidad de hilos(int), el quamtum para cada procesador(int), el path para saber donde estan las instrucciones(string)
+         * RES: N/A
+        */
         public Organizador(int cantHilillos, int quantum, string path)
         {
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
             reloj = 0;
             principal = new Procesador();
-            //resultado = new Resultados();
 
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
@@ -53,14 +57,20 @@ namespace Proyecto_Arqui
             inicializaProcesadores();
         }
 
-        //el procesador principal carga en memoria las instrucciones contenidas en los txt
+        /*El programa principal carga en memoria las instrucciones contenidas en los txt
+         * REQ: La ubicacion de los txt(string)
+         * RES: N/A
+         */
         public void cargarMemoria(string path)
         {
             inicializarProcesadorPrincipal();
             cargarInstrucciones(path);
         }
 
-        //Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores
+        /*Crea los hilos que corresponden a cada uno de los nucleos o procesadores, en total se simulan 3 procesadores, los inicia y sincroniza.
+         * REQ: N/A
+         * RES: N/A
+         */
         private void inicializaProcesadores()
         {
             Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador2, ref procesador3, ref procesador1, this); });
@@ -76,18 +86,13 @@ namespace Proyecto_Arqui
             hilo_proc1.Join();
             hilo_proc2.Join();
             hilo_proc3.Join();
-
-            //imprimirFinal();
         }
 
-        /// <summary>
-        /// Metodo para la sincronizacion de los ciclos de reloj entre procesadores.
-        /// Se revisa si hay al menos un procesador corriendo. Si hay un procesador
-        /// que ya no esta corriendo, se remueve de la barrera, para mantener sincronizacion.
-        /// </summary>
-        /// <param name="proc1">Procesador a sincronizar</param>
-        /// <param name="proc2">Procesador a sincronizar</param>
-        /// <param name="proc3">Procesador a sincronizar</param>
+        /*Metodo para la sincronizacion de los ciclos de reloj entre procesadores.
+         * Se revisa si hay al menos un procesador corriendo. Si hay un procesador que ya no esta corriendo, se remueve de la barrera, para mantener sincronizacion.
+         * REQ: Los 3 hilos simulando los 3 procesadores (Thread)
+         * RES: N/A
+         */
         public void sincronizarReloj(Thread proc1, Thread proc2, Thread proc3)
         {
             //Variables para saber cual hilo se ha removido de la barrera
@@ -132,7 +137,10 @@ namespace Proyecto_Arqui
             }
         }
 
-        //solo para el procesador principal que va a tener la memoria 
+        /*Inicializa toda la memoria (Instrucciones y Datos) en 1 y las colas que contienen los contextos
+         * REQ: N/A
+         * RES: N/A
+         */
         public void inicializarProcesadorPrincipal()
         {
             memoria = new int[64, 16];
@@ -159,10 +167,13 @@ namespace Proyecto_Arqui
             }
         }
 
-        //el procesador principal carga instrucciones de los txt a memoria principal
+        /*El programa principal carga instrucciones de los txt a memoria principal
+         * Lee todos los txt uno por uno, lee por fila, divide por espacios y va poniendo los valores en memoria
+         * REQ: La direccion de los txt(string)
+         * RES: N/A 
+        */
         public void cargarInstrucciones(string path)
         {
-            //BindingList<int> data = new BindingList<int>();
             try
             {
                 int fila = 24;
@@ -202,9 +213,6 @@ namespace Proyecto_Arqui
                             }
                         }
                     }
-                    //int valor = Int32.Parse(contents);
-                    //    data.Add(valor);
-                    //    CD1.DataSource = data;
                 }
             }
             catch (IOException ex)
@@ -213,6 +221,10 @@ namespace Proyecto_Arqui
             }
         }
 
+        /* Llena la cola de contexto con cada txt que va leyendo, es decir cada hilillo
+         * REQ: La PC o direccion de memoria a leer cuando el hilillo se vaya a ejecutar(int)
+         * RES: N/A
+         */
         public void llenarCola(int pc)
         {
             int[] a = new int[36];
@@ -225,6 +237,10 @@ namespace Proyecto_Arqui
             colaContexto.Enqueue(a);
         }
 
+        /*Imprime los datos de los procesadores mientras estan ejecutando, los registros, y el ciclo
+         * REQ: N/A
+         * RES: N/A
+         */
         public void imprimirDatos()
         {
             BindingList<string> data = new BindingList<string>();

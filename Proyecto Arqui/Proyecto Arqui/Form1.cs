@@ -43,6 +43,10 @@ namespace Proyecto_Arqui
 
         }
 
+        /*Se encarga de obtener el path cuando el usuario busca los txt
+         * REQ: object, EventArgs
+         * RES: N/A
+         */ 
         private void Direccion_Click(object sender, EventArgs e)
         {
             int size = -1;
@@ -53,7 +57,7 @@ namespace Proyecto_Arqui
                 path = new FileInfo(file).Directory.FullName;               
             }
         }
-
+    
         private void SiDatos_Click(object sender, EventArgs e)
         {
 
@@ -74,8 +78,7 @@ namespace Proyecto_Arqui
              MIPS.Visible = true;
              MIPS.inicializar();
              MIPS.cargarInstrucciones(path); 
-
-           ******* LO MOVI A LA CLASE ORGANIZADOR*****  */
+            */
 
         }
 

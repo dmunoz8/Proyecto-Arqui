@@ -15,19 +15,24 @@ namespace Proyecto_Arqui
     public partial class Procesador : Form
     {
         private int numeroProcesador;
-        public int[] registros; //32 (R0 - R31)
-        public int[] contexto; //35 R0-R31, PC, RL, duracion 
-        public int[] cacheDatos; // 4 bloques de una palabra
-        public int[] cacheInstrucciones; // 4 bloques de 4 palabras
-        public Queue<int> hilillos;
+        public int[] registros; //estructura de los registros, 32 (R0 - R31)
+        public int[] contexto; //estructura de los contextos, 35 R0-R31, PC, RL, duracion 
+        public int[] cacheDatos; //estructura de las caches de datos, 4 bloques de una palabra
+        public int[] cacheInstrucciones; //estructura de las caches de instrucciones, 4 bloques de 4 palabras
+        public Queue<int> hilillos; //Cola de hilillo
         public Barrier sincronizacion;
         public static Mutex varsMutex;
-        public int quantumLocal;
-        public int reloj;
+        public int quantumLocal; //Quantum que tiene cada procesador
+        public int reloj; //reloj en comun para contabilizar los ciclos
         public int RL;
         public int PC;
-        public int duracion;
+        public int duracion; //duracion de los hilillos
 
+        /*Constructor
+         * Inicializa varios componentes de los procesadores
+         * REQ: int, Barrier
+         * RES: N/A
+         */ 
         public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
         {
             numeroProcesador = numProcesador;
@@ -40,13 +45,16 @@ namespace Proyecto_Arqui
             varsMutex = new Mutex();
         }
 
-        //inicializador de registros y caches de datos de los tres procesadores 
+        /*Inicializador de registros y caches de datos de los tres procesadores 
+         * REQ: N/A
+         * RES: N/A
+         */ 
         public void inicializarProcesador()
         {
             registros = new int[32];
             contexto = new int[35];
-            cacheInstrucciones = new int[72];
-            cacheDatos = new int[24]; //4*(1palabra(4 enteros)+2campos de control) --> 4 * valor, etiqueta y estado.
+            cacheInstrucciones = new int[72]; //40 bloques
+            cacheDatos = new int[24]; //4*(1palabra(4 enteros)+2campos de control) --> 4 * valor, etiqueta y estado. 24 bloques
 
             for (int i = 0; i < 32; i++)
             {
@@ -79,13 +87,17 @@ namespace Proyecto_Arqui
             cacheDatos[23] = -1;
         }
 
+        /*Se encarga de pasar las instrucciones de memoria a cache cuando hay un fallo, contabiliza los ciclos correspondientes
+         * REQ: referencia de quien posee la memoria(ref Organizador)
+         * RES: N/A
+         */ 
         public void pasarInstrMemoriaCache(ref Organizador p)
         {
             int bloque = calcularBloque(PC);
             int posicionC = posicionCache(bloque);
             int lengthMemoria = 0;
             int i = -1;
-            bool leyo = false;
+            bool leyo = false; //variable para saber si pudo leer de memoria, sino para seguir intentando
             while (!leyo)
             {
                 if (Monitor.TryEnter(cacheInstrucciones))
@@ -95,19 +107,19 @@ namespace Proyecto_Arqui
                         switch (posicionC)
                         {
                             case 0:
-                                i = 0;
+                                i = 0; //inicio de bloque 0
                                 break;
 
                             case 1:
-                                i = 18;
+                                i = 18; //inicio de bloque 1
                                 break;
 
                             case 2:
-                                i = 36;
+                                i = 36; //inicio de bloque 2
                                 break;
 
                             case 3:
-                                i = 54;
+                                i = 54; //inicio de bloque 3
                                 break;
                         }
                         if (Monitor.TryEnter(p.memoria))
@@ -121,7 +133,7 @@ namespace Proyecto_Arqui
                                 }
                                 while (lengthMemoria < 16)
                                 {
-                                    try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; }
+                                    try { cacheInstrucciones[i] = p.memoria[bloque, lengthMemoria]; } //escribe de memoria a cache de instrucciones
                                     catch { Console.WriteLine("Bloque: {0}, length: {1}", bloque, lengthMemoria); }
                                     lengthMemoria++;
                                     i++;
@@ -146,35 +158,38 @@ namespace Proyecto_Arqui
             }
         }
 
+        /*Metodo central donde cada hilillo revisa que debe ejecutar y hasta cuando continuar ejecutando sus instrucciones
+         * REQ: el quamtum para cada procesador(int), referencia de cada procesador para el bloque de caches si es necesario(ref Procesador), el que posee los elementos compartidos(Organizador)
+         * RES: N/A
+         */ 
         public void ejecutarInstrs(int quantum, ref Procesador a, ref Procesador b, ref Procesador c, Organizador p)
         {
-            int[] instruccion = new int[4];
-            int hilillos = 0;
+            int[] instruccion = new int[4]; //almacena la instruccion a ejecutar cada ciclo
+            int hilillos = 0; //hilillos que restan en cola
             int relojInicio = 0;
-            int relojFinal = 0;
-            //hay hilillos que correr?
-            varsMutex.WaitOne();
+            int relojFinal = 0;           
+            varsMutex.WaitOne(); //hay hilillos que correr?
             while (p.colaContexto.Count > 0)
             {
                 varsMutex.ReleaseMutex();
                 quantumLocal = quantum;
-                int fin = -1;
+                int fin = -1; //valor para saber que el hilillo no ha terminado
                 varsMutex.WaitOne();
-                hilillos = p.colaContexto.Count;
+                hilillos = p.colaContexto.Count; //cuenta cuantos hilos hay en cola
                 if (hilillos > 0)
                 {
-                    int[] contextoACargar = p.colaContexto.Dequeue();
+                    int[] contextoACargar = p.colaContexto.Dequeue(); //saca un hilillo de la cola
                     if (contextoACargar == null)
                     {
                         Console.WriteLine("Hilillos: {0}", hilillos);
                     }
                     varsMutex.ReleaseMutex();
-                    cargarContexto(contextoACargar);//saca un contexto de la cola
+                    cargarContexto(contextoACargar);//Carga los valores correspondientes dentro del procesador
                     relojInicio = reloj;
-                    while (quantumLocal > 0 && fin != 63)
+                    while (quantumLocal > 0 && fin != 63) //corre mientras haya quamtum y la instruccion 63 no se haya ejecutado
                     {
                         instruccion = buscarInstruccion(ref p);
-                        //PC += 4;
+
                         switch (instruccion[0])
                         {
                             case 2:     // JR
@@ -222,7 +237,7 @@ namespace Proyecto_Arqui
 
                             case 35:    // LW
                                 int leyo = ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                if (leyo == 0)
+                                if (leyo == 0) //Si no leyo devuelvase
                                 {
                                     PC -= 4;
                                 }
@@ -233,20 +248,21 @@ namespace Proyecto_Arqui
                                 {
                                     Console.WriteLine( "liberando candado de posicion "+instruccion[3] );
                                 }
+
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
                                 //Console.WriteLine("haciendo store en pos " + registros[instruccion[1]] + instruccion[3]);
-                                if (escribi == 0)
+                                if (escribi == 0) //Si no ha escrito devuelvase
                                 {
                                     PC -= 4;
                                 }
                                 break;
 
                             case 50: //LL
-                                
                                 // Console.WriteLine("hilo  "+registros[31]+" haciendo LL en registro :"+ instruccion[2] + " ....de  pos de memoria"+ registros[instruccion[1]] + instruccion[3]);                           
                                 int leyoLL= ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                if (leyoLL==1) {
-                                    //Console.WriteLine("hilo  " + registros[31] +  " --->   Registro " + instruccion[2] +" = " + registros[instruccion[2]]);
+                                if (leyoLL==1)
+                                {
+                                  //Console.WriteLine("hilo  " + registros[31] +  " --->   Registro " + instruccion[2] +" = " + registros[instruccion[2]]);
                                 }
 
                                 break;
@@ -254,13 +270,11 @@ namespace Proyecto_Arqui
                             case 51: //SC;
                                // int dirMemo = (registros[instruccion[1]] + instruccion[3]);
                                // Console.WriteLine("hilo  " + registros[31] + " iniciando SC en  pos de memoria: " + dirMemo );
+                               int coincideRL = ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
 
-                               
-                                int coincideRL = ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
+                               break;
 
-                                break;
-
-                            case 63:    // Codigo para terminar el programa
+                            case 63: // FIN, Codigo para terminar el programa
                                 fin = 63;
                                 relojFinal = reloj;
                                 duracion += (relojFinal - relojInicio);
@@ -281,7 +295,7 @@ namespace Proyecto_Arqui
                     if (fin != 63)
                     {
                         relojFinal = reloj;
-                        duracion += (relojFinal - relojInicio);
+                        duracion += (relojFinal - relojInicio); // Cuanto duro ejecutandose ese hilillo
                         int[] contextoGuardar1 = guardarContexto();
                         varsMutex.WaitOne();
                         p.colaContexto.Enqueue(contextoGuardar1);
@@ -299,12 +313,21 @@ namespace Proyecto_Arqui
             sincronizacion.RemoveParticipant();
         }
 
+        /*Ejecutar un SW.
+         * Calcula la posicion en memoria a la que debe escribir.
+         * Pide el bus para ir a invalidar las otras caches, y luego libera
+         * Invalida la propia
+         * Si es fallo, escribe solo en memoria
+         * Si es hit, escribe en memoria y cache
+         * REQ: referencias para las otras caches(ref Procesador), la direccion en cual escribir(int), de cual registro escribir el valor(int), referencia a la memoria(ref Organizador)
+         * RES: Si escribio o no (int)
+         */ 
         private int ejecutarSW(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
             int palabra = calcularPalabra(dirMem);
-            int bloque = calcularBloque(dirMem);          // Bloque en caché donde esta el dato            
+            int bloque = calcularBloque(dirMem); // Bloque en caché donde esta el dato            
             int posicionC = posicionCache(bloque);
-            int escribio = 0;
+            int escribio = 0; //variable para ver si hay escritura o no
 
             int cantInvalidadas = 0;
             int cantCompartidos = 0;
@@ -316,7 +339,8 @@ namespace Proyecto_Arqui
 
             bool datoEnMiCache = false;
 
-            int _datoEscribir = registros[numRegistro];
+            int _datoEscribir = registros[numRegistro]; //valor a escribir
+
             if (Monitor.TryEnter(p.memoriaDatos))
             {
                 try
@@ -327,11 +351,10 @@ namespace Proyecto_Arqui
                         {
                             cantCaches++;
                             //verificar si esta en la cache del procesador a
-                            if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                            if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque)
                             {
-
                                 //si tiene el dato
-                                if (a.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
+                                if (a.cacheDatos[posicionC * 6 + posEstado] == 1) //si esta valido, lo invalido
                                 {
                                     a.cacheDatos[posicionC * 6 + posEstado] = -1;
                                 }
@@ -354,9 +377,9 @@ namespace Proyecto_Arqui
                         {
                             cantCaches++;
                             //verificar si esta en la cache del procesador b
-                            if (b.cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
-                            {    //si tiene el dato
-                                if (b.cacheDatos[posicionC * 6 + posEstado] == 1)          //si esta valido, lo invalido
+                            if (b.cacheDatos[posicionC * 6 + posEtiqueta] == bloque)
+                            {   //si tiene el dato
+                                if (b.cacheDatos[posicionC * 6 + posEstado] == 1) //si esta valido, lo invalido
                                 {
                                     b.cacheDatos[posicionC * 6 + posEstado] = -1;
                                 }
@@ -379,9 +402,9 @@ namespace Proyecto_Arqui
                         try
                         {
                             //verificar si esta en mi cache
-                            if (cacheDatos[posicionC * 6 + posEtiqueta] == bloque) //dirMem)
+                            if (cacheDatos[posicionC * 6 + posEtiqueta] == bloque)
                                     {    //si tiene el dato
-                                        if (cacheDatos[posicionC * 6 + posEstado] == 1)   //si esta valido, lo invalido
+                                        if (cacheDatos[posicionC * 6 + posEstado] == 1) //si esta valido, lo invalido
                                         {
                                             cacheDatos[posicionC * 6 + posEstado] = -1;
                                         }
@@ -422,12 +445,18 @@ namespace Proyecto_Arqui
             return escribio;
         }
 
+        /*Ejecutar un LW
+         * Calcula la direccion de cual leer segun la estructura utilizada
+         * Calcula en que bloque de cache subir lo que se va a leer
+         * REQ: la direccion de donde leer(int), a cual registro guardarlo(int), la referencia de la memoria(ref Organizador)
+         * RES: Si leyo o no (int)
+         */ 
         public int ejecutarLW(int direccionMemoria, int numeroRegistro, ref Organizador p)
         {
             int palabra = calcularPalabra(direccionMemoria);
-            int bloque = calcularBloque(direccionMemoria);          // Bloque en caché donde esta el dato            
-            int posicionC = posicionCache(bloque);                  // Donde deberia estar en cache                        
-            int leyo = 0;                       //int desplazamiento = (direccionMemoria % 16) / 4;     // Numero de palabras a partir del bloque
+            int bloque = calcularBloque(direccionMemoria); // Bloque en caché donde esta el dato            
+            int posicionC = posicionCache(bloque); // Donde deberia estar en cache                        
+            int leyo = 0; //variable para saber si leyo o no
 
             if (Monitor.TryEnter(cacheDatos))
             {
@@ -482,6 +511,13 @@ namespace Proyecto_Arqui
 
             return leyo;
         }
+
+        /*Ejecutar un SC
+         * Revisa si el RL es igual a la direccion donde debe escribir
+         * Si es asi, trata de escribir, esto coloca un candado
+         * Si no pudo se coloca un 0 en el registro designado
+         * REQ: referencias de los procesadores para las caches(ref Procesador), direccion en la cual escribir(int), registro de donde guardar el valor(int), referencia para la memoria(ref Organizador)
+         */ 
         public int ejecutarSC(ref Procesador a, ref Procesador b, int dirMem, int numRegistro, ref Organizador p)
         {
             int _dirMem = dirMem;
@@ -516,27 +552,39 @@ namespace Proyecto_Arqui
             return escribio;
         }
 
+        /*Calcula el bloque para las instrucciones de lectura y escritura, es decir conviete la direccion en bloque para la estructura utilizada
+         * REQ: la direccion de memoria(int)
+         * RES: el numero de bloque(int)
+         */ 
         public int calcularBloque(int direccionMemoria)
         {
             int bloque = direccionMemoria / 16;
             return bloque;
         }
 
+        /*Posicion de la cache,es decir el bloque que se va a usar cuando se sube un bloque de memoria
+         * REQ: el bloque de memoria(int)
+         * RES: La posicion o bloque dentro de la cache(int)
+         */ 
         public int posicionCache(int bloque)
         {
             int posCache = bloque % 4;
             return posCache;
         }
 
-        /// <summary>
-        /// A partir de la direccion de memoria calcular la palabra en el bloque de memoria.
-        /// </summary>
-        /// <param name="direccionMemoria">Direccion en la memoria principal</param>
-        /// <returns></returns>
+        /*A partir de la direccion de memoria calcular la palabra en el bloque de memoria.
+         * REQ: la direccion de memoria(int)
+         * RES: la palabra que se va a usar(int)
+         */ 
         public int calcularPalabra(int direccionMemoria)
         {
             return (direccionMemoria % 16) / 4;
         }
+
+        /*Se encarga de poner los valores correspondientes para la ejecucion de un hilillo segun su contexto
+         * REQ: el contexto del hilillo(int[])
+         * RES: N/A
+         */ 
         private void cargarContexto(int[] contextoCargar)
         {
 
@@ -550,6 +598,10 @@ namespace Proyecto_Arqui
 
         }
 
+        /*Se encarga de guardar los valores de cada hilillo en un array para ser guardado en una cola
+         * REQ: N/A
+         * RES: el contexto en la estructura de un array(int[])
+         */ 
         private int[] guardarContexto()
         {
             int[] contextoGuardar = new int[35];
@@ -565,12 +617,15 @@ namespace Proyecto_Arqui
 
         }
 
-        // Busca las instruccion a ejecutar en la cache de instrucciones
+        /*Busca las instruccion a ejecutar en la cache de instrucciones
+         *REQ: Pasa la referencia de la memoria si no esta en cache(ref Organizador)
+         * RES: la instruccion a ejecutar(int[]) 
+        */
         public int[] buscarInstruccion(ref Organizador p)
         {
             int bloque = calcularBloque(PC);
             int pos = posicionCache(bloque); // Para buscar en la etiqueta de la memoria caché
-            int desplazamiento = PC - (16 * bloque);    // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
+            int desplazamiento = PC - (16 * bloque); // De aqui se saca el numero de columna. A partir de donde comienza el bloque, cuantas palabras me desplazo            
             int[] instruccion = new int[4];
             if (Monitor.TryEnter(cacheInstrucciones))
             {
@@ -596,6 +651,10 @@ namespace Proyecto_Arqui
             return instruccion;
         }
 
+        /*Metodo que guarda los valores de cada hilillo en una cola para imprimirlos al final
+         * REQ: duracion de cada hilillo(int), referencia de donde guardar el array(ref Organizador)
+         * RES: N/A
+         */ 
         public void terminarHilillo(int duracion, ref Organizador org)
         {
             int[] final = new int[57];
