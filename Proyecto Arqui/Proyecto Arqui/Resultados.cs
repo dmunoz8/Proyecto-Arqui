@@ -28,6 +28,11 @@ namespace Proyecto_Arqui
         {
 
         }
+
+        /*Imprime los resultados finales de cada hilo que se ejecuto, registros, caches, ciclos de duración y tambien el estado de la memoria
+         * REQ: N/A
+         * RES: N/A
+         */ 
         public void imprimir()
         {
             for (int i = 0; i < 24; i++)
