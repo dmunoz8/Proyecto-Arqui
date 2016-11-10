@@ -51,7 +51,7 @@ namespace Proyecto_Arqui
             while (org.terminados.Count > 0)
             {
                 int[] ter = org.terminados.Dequeue();
-                for (int g = 0; g < 33; g++)
+                for (int g = 0; g < 32; g++)
                 {
                     regs.Text += ter[g] + " ";
                 }
