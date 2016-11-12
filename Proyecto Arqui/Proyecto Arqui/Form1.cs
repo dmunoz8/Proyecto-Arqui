@@ -66,8 +66,9 @@ namespace Proyecto_Arqui
 
             //this.Visible = false;
             //this.Close();
-
-            Organizador organizador = new Organizador(_hilos,_quantum, path);
+            bool lento = false;
+            lento = ModoLentoCheck.Checked;
+            Organizador organizador = new Organizador(_hilos,_quantum, path,lento);
 
             Resultados resultado = new Resultados(organizador);
             resultado.imprimir();

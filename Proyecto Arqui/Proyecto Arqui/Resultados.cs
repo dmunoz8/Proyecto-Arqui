@@ -52,7 +52,7 @@ namespace Proyecto_Arqui
                 }
                 mem.Text += '\n';
             }*/
-
+            ciclos.Text = "Reloj final: " + org.reloj+"\n";
             while (org.terminados.Count > 0)
             {
                 int[] ter = org.terminados.Dequeue();

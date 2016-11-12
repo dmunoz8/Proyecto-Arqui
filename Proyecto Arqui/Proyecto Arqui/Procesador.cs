@@ -281,13 +281,7 @@ namespace Proyecto_Arqui
                                 terminarHilillo(duracion, ref p);
                                 break;
                         }
-                        quantumLocal--;
-                        
-                        //!!!!!!!!!!!!!!!!!!!------- OJO --------------!!!!!!!!!!!!!!!
-                        //TODO: preguntar a la profe si cuando no logra bloquear bus es un ciclo extra o este ya lo considera
-                        
-                        //Console.WriteLine("Procesador " + numeroProcesador + ". Reloj: {0}, qlocal: {1} \nPC: {2}", reloj, quantumLocal, PC);
-
+                        quantumLocal--;                        
                         sincronizacion.SignalAndWait();
                         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                        
                     }
@@ -353,18 +347,18 @@ namespace Proyecto_Arqui
                             //verificar si esta en la cache del procesador a
                             if (a.cacheDatos[posicionC * 6 + posEtiqueta] == bloque)
                             {
-                                //si tiene el dato
+                                //sí, tiene el dato
                                 if (a.cacheDatos[posicionC * 6 + posEstado] == 1) //si esta valido, lo invalido
                                 {
                                     a.cacheDatos[posicionC * 6 + posEstado] = -1;
+                                    if (a.RL == dirMem) {
+                                        a.RL = -1;
+                                    }
                                 }
                                 cantCompartidos++;
                                 cantInvalidadas++;
                             }
-                            if (a.RL == dirMem) {
-                                a.RL = -1;
-                            }
-
+                            
                         }
                         finally
                         {
@@ -382,15 +376,14 @@ namespace Proyecto_Arqui
                                 if (b.cacheDatos[posicionC * 6 + posEstado] == 1) //si esta valido, lo invalido
                                 {
                                     b.cacheDatos[posicionC * 6 + posEstado] = -1;
+                                    if (b.RL == dirMem)
+                                    {
+                                        b.RL = -1;
+                                    }
                                 }
                                 cantCompartidos++;
                                 cantInvalidadas++;
                             }
-                            if (b.RL == dirMem)
-                            {
-                                b.RL = -1;
-                            }
-
                         }
                         finally
                         {
@@ -435,7 +428,6 @@ namespace Proyecto_Arqui
                             Monitor.Exit(cacheDatos);
                         }
                     }
-
                 }
                 finally
                 {
@@ -530,7 +522,7 @@ namespace Proyecto_Arqui
                     {
                         escribio = ejecutarSW(ref a, ref b, dirMem, numRegistro, ref p);
                         if (escribio == 1)
-                        {                          
+                        {
                             registros[numRegistro] = 1;
                         }
                         else {

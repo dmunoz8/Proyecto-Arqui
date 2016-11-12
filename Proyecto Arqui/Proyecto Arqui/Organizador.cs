@@ -2,12 +2,6 @@
 using System.Threading;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.IO;
 
 namespace Proyecto_Arqui
@@ -20,15 +14,16 @@ namespace Proyecto_Arqui
         public Queue<int []> colaContexto; //Cola que guarda los contextos de los hilillos cuando no se encuentren en ejecucion en algun procesador
         public Queue<int[]> terminados; //Cola de resultados para los hilillos que van terminando
         
-        int _CANTHILILLOS; //Cantidad de hilos a ejecutar
-        int _QUANTUM; //Quantum dado por el usuario
-        int reloj; //reloj en comun de los procesadores
-        int impresiones = 0;
+        public int _CANTHILILLOS; //Cantidad de hilos a ejecutar
+        public int _QUANTUM; //Quantum dado por el usuario
+        public bool _MODOLENTO;
+        public int reloj; //reloj en comun de los procesadores
+        public int impresiones = 0;
 
-        Procesador principal;
-        Procesador procesador1;
-        Procesador procesador2;
-        Procesador procesador3;
+        public Procesador principal;
+        public Procesador procesador1;
+        public Procesador procesador2;
+        public Procesador procesador3;
         public Barrier sincronizacion;
 
         /*Constructor
@@ -36,10 +31,11 @@ namespace Proyecto_Arqui
          * REQ: La cantidad de hilos(int), el quamtum para cada procesador(int), el path para saber donde estan las instrucciones(string)
          * RES: N/A
         */
-        public Organizador(int cantHilillos, int quantum, string path)
+        public Organizador(int cantHilillos, int quantum, string path, bool modoLento)
         {
             _CANTHILILLOS = cantHilillos;
             _QUANTUM = quantum;
+            _MODOLENTO = modoLento;
             reloj = 0;
             principal = new Procesador();
 
@@ -79,8 +75,7 @@ namespace Proyecto_Arqui
 
             hilo_proc1.Start();
             hilo_proc2.Start();
-            hilo_proc3.Start();                          
-              
+            hilo_proc3.Start();
             sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
 
             hilo_proc1.Join();
@@ -95,32 +90,19 @@ namespace Proyecto_Arqui
          */
         public void sincronizarReloj(Thread proc1, Thread proc2, Thread proc3)
         {
-            //Variables para saber cual hilo se ha removido de la barrera
-            //bool proc1Corriendo = true;
-            //bool proc2Corriendo = true;
-            //bool proc3Corriendo = true;
-
             while (sincronizacion.ParticipantCount > 1)
             {
-                //Se revisa si los procesadores siguen trabajando
-                //if (!proc1.IsAlive && proc1Corriendo)
-                //{
-                //    proc1Corriendo = false;
-                //    sincronizacion.RemoveParticipant();
-                //}
-                //if (!proc2.IsAlive && proc2Corriendo)
-                //{
-                //    proc2Corriendo = false;
-                //    sincronizacion.RemoveParticipant();
-                //}
-                //if (!proc3.IsAlive && proc3Corriendo)
-                //{
-                //    proc3Corriendo = false;
-                //    sincronizacion.RemoveParticipant();
-                //}
+                if(reloj%300 == 0)
+                {
+                    //despliega informacion
+                    imprimirDatos();
+                }
 
-                //despliega informacion 
-                imprimirDatos();
+                if(_MODOLENTO)
+                {
+                    //espera a que el usuario digite una tecla para continuar la ejecucion
+                    //pedirTecla();
+                }
 
                 //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
                 reloj++;
@@ -129,11 +111,7 @@ namespace Proyecto_Arqui
                 procesador3.reloj = reloj;
 
                 //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
-                if (reloj % 1000 == 0)
-                {
-                    Console.WriteLine("Organizador. Reloj: {0}", reloj);
-                }
-                sincronizacion.SignalAndWait();                
+                sincronizacion.SignalAndWait();
             }
         }
 
