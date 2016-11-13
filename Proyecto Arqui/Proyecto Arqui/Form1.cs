@@ -18,9 +18,6 @@ namespace Proyecto_Arqui
 
         public int _quantum;
         public int _hilos;
-        Procesador procesador_1;
-        Procesador procesador_2;
-        Procesador procesador_3;
 
 
         public Datos()
@@ -49,7 +46,6 @@ namespace Proyecto_Arqui
          */ 
         private void Direccion_Click(object sender, EventArgs e)
         {
-            int size = -1;
             DialogResult result = buscar.ShowDialog(); 
             if (result == DialogResult.OK) 
             {
@@ -69,9 +65,18 @@ namespace Proyecto_Arqui
             bool lento = false;
             lento = ModoLentoCheck.Checked;
             Organizador organizador = new Organizador(_hilos,_quantum, path,lento);
-
-            Resultados resultado = new Resultados(organizador);
-            resultado.imprimir();
+            organizador.inicializaProcesadores();
+            if (lento)
+            {
+                organizador.imprimirDatos();
+            }
+            else
+            {
+                organizador.sincronizarReloj();
+                Resultados resultado = new Resultados(organizador);
+                resultado.imprimir();
+            }
+            //organizador.eliminarHilos();
 
 
             /*Procesador MIPS = new Procesador();

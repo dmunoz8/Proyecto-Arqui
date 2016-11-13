@@ -37,20 +37,20 @@ namespace Proyecto_Arqui
             _QUANTUM = quantum;
             _MODOLENTO = modoLento;
             reloj = 0;
-            principal = new Procesador();
+
+            principal = new Procesador(modoLento,this);
 
             sincronizacion = new Barrier(4); //barrera para los tres procesadores y procesador principal
 
-            procesador1 = new Procesador(1, sincronizacion);
-            procesador2 = new Procesador(2, sincronizacion);
-            procesador3 = new Procesador(3, sincronizacion);
+            procesador1 = new Procesador(modoLento, null, 1, sincronizacion);
+            procesador2 = new Procesador(modoLento, null, 2, sincronizacion);
+            procesador3 = new Procesador(modoLento, null, 3, sincronizacion);
 
             procesador1.inicializarProcesador();
             procesador2.inicializarProcesador();
             procesador3.inicializarProcesador();
 
             cargarMemoria(path);
-            inicializaProcesadores();
         }
 
         /*El programa principal carga en memoria las instrucciones contenidas en los txt
@@ -67,41 +67,36 @@ namespace Proyecto_Arqui
          * REQ: N/A
          * RES: N/A
          */
-        private void inicializaProcesadores()
+        public void inicializaProcesadores()
         {
             Thread hilo_proc1 = new Thread(delegate () { procesador1.ejecutarInstrs(_QUANTUM, ref procesador2, ref procesador3, ref procesador1, this); });
             Thread hilo_proc2 = new Thread(delegate() { procesador2.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador3, ref procesador2, this); });
             Thread hilo_proc3 = new Thread(delegate() { procesador3.ejecutarInstrs(_QUANTUM, ref procesador1, ref procesador2, ref procesador3, this); });
-
             hilo_proc1.Start();
             hilo_proc2.Start();
             hilo_proc3.Start();
-            sincronizarReloj(hilo_proc1, hilo_proc2, hilo_proc3);
-
-            hilo_proc1.Join();
-            hilo_proc2.Join();
-            hilo_proc3.Join();
         }
+
+        //public void eliminarHilos()
+        //{
+        //    hilo_proc1.Join();
+        //    hilo_proc2.Join();
+        //    hilo_proc3.Join();
+        //}
 
         /*Metodo para la sincronizacion de los ciclos de reloj entre procesadores.
          * Se revisa si hay al menos un procesador corriendo. Si hay un procesador que ya no esta corriendo, se remueve de la barrera, para mantener sincronizacion.
          * REQ: Los 3 hilos simulando los 3 procesadores (Thread)
          * RES: N/A
          */
-        public void sincronizarReloj(Thread proc1, Thread proc2, Thread proc3)
+        public void sincronizarReloj()
         {
             while (sincronizacion.ParticipantCount > 1)
-            {
+            {   
                 if(reloj%300 == 0)
                 {
                     //despliega informacion
                     imprimirDatos();
-                }
-
-                if(_MODOLENTO)
-                {
-                    //espera a que el usuario digite una tecla para continuar la ejecucion
-                    //pedirTecla();
                 }
 
                 //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
@@ -112,6 +107,31 @@ namespace Proyecto_Arqui
 
                 //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
                 sincronizacion.SignalAndWait();
+            }
+        }
+
+
+        /* Metodo para sincronizar reloj de procesadores manualmente. Devuelve un booleano para saber si se corrieron todos los hilillos
+         * REQ: N/A
+         * RES: bool
+         */
+        public bool sincronizarModoLento()
+        {
+            //una vez que los hilos envían su señal (avanzaron un ciclo) se suma al reloj
+            imprimirDatos();
+            reloj++;
+            procesador1.reloj = reloj;
+            procesador2.reloj = reloj;
+            procesador3.reloj = reloj;
+            //Permite a los procesadores seguir trabajando, espera a que cada uno avance un ciclo
+            sincronizacion.SignalAndWait();
+            if(sincronizacion.ParticipantCount > 1)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 
@@ -167,7 +187,7 @@ namespace Proyecto_Arqui
                             {
                                 direccionHilillo.Enqueue(fila * 16 + col);
 
-                                llenarCola(fila * 16 + col);
+                                llenarCola(fila * 16 + col, int.Parse(files.Substring(files.Length-5,1)) );
                             }
                             if (col == 16)
                             {
@@ -203,15 +223,15 @@ namespace Proyecto_Arqui
          * REQ: La PC o direccion de memoria a leer cuando el hilillo se vaya a ejecutar(int)
          * RES: N/A
          */
-        public void llenarCola(int pc)
+        public void llenarCola(int pc,int name)
         {
             int[] a = new int[36];
-            for(int i = 0; i < 35; i++)
+            for(int i = 0; i < 36; i++)
             {
                 a[i] = 0;
             }
             a[32] = pc; //32 es el PC
-            a[34] = 0;  //duracion del hilillo
+            a[35] = name;
             colaContexto.Enqueue(a);
         }
 
@@ -234,6 +254,12 @@ namespace Proyecto_Arqui
             principal.CD1.DataSource = data;
             principal.CD2.DataSource = data2;
             principal.CD3.DataSource = data3;
+
+            principal.p1HililloTxt.Text = procesador1.nombre;
+            principal.p2HililloTxt.Text = procesador2.nombre;
+            principal.p3HililloTxt.Text = procesador3.nombre;
+
+            principal.p1RelojTxt.Text = reloj.ToString();
             principal.Visible = true;
         }
     }

@@ -29,17 +29,20 @@
         private void InitializeComponent()
         {
             this.P1 = new System.Windows.Forms.GroupBox();
+            this.p1RelojTxt = new System.Windows.Forms.TextBox();
+            this.p1HililloTxt = new System.Windows.Forms.TextBox();
             this.CD1 = new System.Windows.Forms.ListBox();
             this.R1 = new System.Windows.Forms.Label();
             this.ID1 = new System.Windows.Forms.Label();
             this.P2 = new System.Windows.Forms.GroupBox();
+            this.p2HililloTxt = new System.Windows.Forms.TextBox();
             this.CD2 = new System.Windows.Forms.ListBox();
-            this.R2 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.P3 = new System.Windows.Forms.GroupBox();
+            this.p3HililloTxt = new System.Windows.Forms.TextBox();
             this.CD3 = new System.Windows.Forms.ListBox();
-            this.R3 = new System.Windows.Forms.Label();
             this.ID3 = new System.Windows.Forms.Label();
+            this.siguienteBtn = new System.Windows.Forms.Button();
             this.P1.SuspendLayout();
             this.P2.SuspendLayout();
             this.P3.SuspendLayout();
@@ -47,10 +50,10 @@
             // 
             // P1
             // 
+            this.P1.Controls.Add(this.p1HililloTxt);
             this.P1.Controls.Add(this.CD1);
-            this.P1.Controls.Add(this.R1);
             this.P1.Controls.Add(this.ID1);
-            this.P1.Location = new System.Drawing.Point(12, 12);
+            this.P1.Location = new System.Drawing.Point(8, 44);
             this.P1.Name = "P1";
             this.P1.Size = new System.Drawing.Size(225, 506);
             this.P1.TabIndex = 0;
@@ -58,10 +61,24 @@
             this.P1.Text = "Procesador 1";
             this.P1.Enter += new System.EventHandler(this.P1_Enter);
             // 
+            // p1RelojTxt
+            // 
+            this.p1RelojTxt.Location = new System.Drawing.Point(74, 5);
+            this.p1RelojTxt.Name = "p1RelojTxt";
+            this.p1RelojTxt.Size = new System.Drawing.Size(100, 20);
+            this.p1RelojTxt.TabIndex = 6;
+            // 
+            // p1HililloTxt
+            // 
+            this.p1HililloTxt.Location = new System.Drawing.Point(67, 31);
+            this.p1HililloTxt.Name = "p1HililloTxt";
+            this.p1HililloTxt.Size = new System.Drawing.Size(100, 20);
+            this.p1HililloTxt.TabIndex = 3;
+            // 
             // CD1
             // 
             this.CD1.FormattingEnabled = true;
-            this.CD1.Location = new System.Drawing.Point(12, 162);
+            this.CD1.Location = new System.Drawing.Point(10, 74);
             this.CD1.Name = "CD1";
             this.CD1.Size = new System.Drawing.Size(199, 290);
             this.CD1.TabIndex = 2;
@@ -70,7 +87,7 @@
             // 
             this.R1.AutoSize = true;
             this.R1.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.R1.Location = new System.Drawing.Point(6, 94);
+            this.R1.Location = new System.Drawing.Point(18, 3);
             this.R1.Name = "R1";
             this.R1.Size = new System.Drawing.Size(50, 19);
             this.R1.TabIndex = 1;
@@ -88,33 +105,30 @@
             // 
             // P2
             // 
+            this.P2.Controls.Add(this.p2HililloTxt);
             this.P2.Controls.Add(this.CD2);
-            this.P2.Controls.Add(this.R2);
             this.P2.Controls.Add(this.label2);
-            this.P2.Location = new System.Drawing.Point(243, 12);
+            this.P2.Location = new System.Drawing.Point(239, 44);
             this.P2.Name = "P2";
             this.P2.Size = new System.Drawing.Size(225, 506);
             this.P2.TabIndex = 1;
             this.P2.TabStop = false;
             this.P2.Text = "Procesador 2";
             // 
+            // p2HililloTxt
+            // 
+            this.p2HililloTxt.Location = new System.Drawing.Point(83, 31);
+            this.p2HililloTxt.Name = "p2HililloTxt";
+            this.p2HililloTxt.Size = new System.Drawing.Size(100, 20);
+            this.p2HililloTxt.TabIndex = 4;
+            // 
             // CD2
             // 
             this.CD2.FormattingEnabled = true;
-            this.CD2.Location = new System.Drawing.Point(12, 162);
+            this.CD2.Location = new System.Drawing.Point(10, 74);
             this.CD2.Name = "CD2";
             this.CD2.Size = new System.Drawing.Size(199, 290);
             this.CD2.TabIndex = 3;
-            // 
-            // R2
-            // 
-            this.R2.AutoSize = true;
-            this.R2.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.R2.Location = new System.Drawing.Point(6, 94);
-            this.R2.Name = "R2";
-            this.R2.Size = new System.Drawing.Size(50, 19);
-            this.R2.TabIndex = 2;
-            this.R2.Text = "Reloj:";
             // 
             // label2
             // 
@@ -128,33 +142,30 @@
             // 
             // P3
             // 
+            this.P3.Controls.Add(this.p3HililloTxt);
             this.P3.Controls.Add(this.CD3);
-            this.P3.Controls.Add(this.R3);
             this.P3.Controls.Add(this.ID3);
-            this.P3.Location = new System.Drawing.Point(474, 12);
+            this.P3.Location = new System.Drawing.Point(470, 44);
             this.P3.Name = "P3";
-            this.P3.Size = new System.Drawing.Size(225, 506);
+            this.P3.Size = new System.Drawing.Size(225, 450);
             this.P3.TabIndex = 1;
             this.P3.TabStop = false;
             this.P3.Text = "Procesador 3";
             // 
+            // p3HililloTxt
+            // 
+            this.p3HililloTxt.Location = new System.Drawing.Point(89, 31);
+            this.p3HililloTxt.Name = "p3HililloTxt";
+            this.p3HililloTxt.Size = new System.Drawing.Size(100, 20);
+            this.p3HililloTxt.TabIndex = 5;
+            // 
             // CD3
             // 
             this.CD3.FormattingEnabled = true;
-            this.CD3.Location = new System.Drawing.Point(12, 162);
+            this.CD3.Location = new System.Drawing.Point(10, 74);
             this.CD3.Name = "CD3";
             this.CD3.Size = new System.Drawing.Size(199, 290);
             this.CD3.TabIndex = 4;
-            // 
-            // R3
-            // 
-            this.R3.AutoSize = true;
-            this.R3.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.R3.Location = new System.Drawing.Point(6, 94);
-            this.R3.Name = "R3";
-            this.R3.Size = new System.Drawing.Size(50, 19);
-            this.R3.TabIndex = 3;
-            this.R3.Text = "Reloj:";
             // 
             // ID3
             // 
@@ -166,12 +177,25 @@
             this.ID3.TabIndex = 2;
             this.ID3.Text = "Hilillo:";
             // 
+            // siguienteBtn
+            // 
+            this.siguienteBtn.Location = new System.Drawing.Point(707, 12);
+            this.siguienteBtn.Name = "siguienteBtn";
+            this.siguienteBtn.Size = new System.Drawing.Size(75, 52);
+            this.siguienteBtn.TabIndex = 2;
+            this.siguienteBtn.Text = "Siguiente";
+            this.siguienteBtn.UseVisualStyleBackColor = true;
+            this.siguienteBtn.Click += new System.EventHandler(this.siguienteBtn_Click);
+            // 
             // Procesador
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(712, 476);
+            this.ClientSize = new System.Drawing.Size(794, 476);
+            this.Controls.Add(this.p1RelojTxt);
+            this.Controls.Add(this.siguienteBtn);
             this.Controls.Add(this.P3);
+            this.Controls.Add(this.R1);
             this.Controls.Add(this.P2);
             this.Controls.Add(this.P1);
             this.Name = "Procesador";
@@ -184,23 +208,26 @@
             this.P3.ResumeLayout(false);
             this.P3.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.GroupBox P1;
-        private System.Windows.Forms.Label R1;
-        private System.Windows.Forms.Label ID1;
-        private System.Windows.Forms.GroupBox P2;
-        private System.Windows.Forms.Label R2;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.GroupBox P3;
-        private System.Windows.Forms.Label R3;
-        private System.Windows.Forms.Label ID3;
+        public System.Windows.Forms.GroupBox P1;
+        public System.Windows.Forms.Label R1;
+        public System.Windows.Forms.Label ID1;
+        public System.Windows.Forms.GroupBox P2;
+        public System.Windows.Forms.Label label2;
+        public System.Windows.Forms.GroupBox P3;
+        public System.Windows.Forms.Label ID3;
         public System.Windows.Forms.ListBox CD1;
         public System.Windows.Forms.ListBox CD2;
         public System.Windows.Forms.ListBox CD3;
-
+        public System.Windows.Forms.Button siguienteBtn;
+        public System.Windows.Forms.TextBox p1RelojTxt;
+        public System.Windows.Forms.TextBox p1HililloTxt;
+        public System.Windows.Forms.TextBox p2HililloTxt;
+        public System.Windows.Forms.TextBox p3HililloTxt;
     }
 }

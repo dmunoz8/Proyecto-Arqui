@@ -27,13 +27,16 @@ namespace Proyecto_Arqui
         public int RL;
         public int PC;
         public int duracion; //duracion de los hilillos
+        public bool lento;
+        public string nombre;
+        public Organizador org;
 
         /*Constructor
          * Inicializa varios componentes de los procesadores
-         * REQ: int, Barrier
+         * REQ: int, bool, Barrier
          * RES: N/A
          */ 
-        public Procesador(int numProcesador = 0, Barrier sincronizacion = null)
+        public Procesador(bool modoLento, Organizador o = null, int numProcesador = 0, Barrier sincronizacion = null)
         {
             numeroProcesador = numProcesador;
             InitializeComponent();
@@ -41,8 +44,11 @@ namespace Proyecto_Arqui
             reloj = 0;
             duracion = 0;
             PC = 0;
+            nombre = "";
             this.sincronizacion = sincronizacion;
+            siguienteBtn.Visible = modoLento;  // se muestra el boton solo si esta activado el modo lento
             varsMutex = new Mutex();
+            org = o;
         }
 
         /*Inicializador de registros y caches de datos de los tres procesadores 
@@ -52,7 +58,7 @@ namespace Proyecto_Arqui
         public void inicializarProcesador()
         {
             registros = new int[32];
-            contexto = new int[35];
+            contexto = new int[36];
             cacheInstrucciones = new int[72]; //40 bloques
             cacheDatos = new int[24]; //4*(1palabra(4 enteros)+2campos de control) --> 4 * valor, etiqueta y estado. 24 bloques
 
@@ -65,6 +71,7 @@ namespace Proyecto_Arqui
             contexto[32] = 0;  //PC
             contexto[33] = 0; //RL
             contexto[34] = 0;  //Duracion
+            contexto[35] = 0;
 
 
             for (int i = 0; i < 72; i++)
@@ -130,6 +137,7 @@ namespace Proyecto_Arqui
                                 {
                                     //de memoria a caché = 28 ciclos
                                     sincronizacion.SignalAndWait();
+                                    Console.WriteLine(w);
                                 }
                                 while (lengthMemoria < 16)
                                 {
@@ -244,13 +252,8 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 43:    // SW
-                                if(instruccion[0] == 43 && registros[instruccion[1]] + instruccion[3] == 176)
-                                {
-                                    Console.WriteLine( "liberando candado de posicion "+instruccion[3] );
-                                }
-
                                 int escribi = ejecutarSW(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                //Console.WriteLine("haciendo store en pos " + registros[instruccion[1]] + instruccion[3]);
+                                
                                 if (escribi == 0) //Si no ha escrito devuelvase
                                 {
                                     PC -= 4;
@@ -258,18 +261,11 @@ namespace Proyecto_Arqui
                                 break;
 
                             case 50: //LL
-                                // Console.WriteLine("hilo  "+registros[31]+" haciendo LL en registro :"+ instruccion[2] + " ....de  pos de memoria"+ registros[instruccion[1]] + instruccion[3]);                           
+                                
                                 int leyoLL= ejecutarLW(registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
-                                if (leyoLL==1)
-                                {
-                                  //Console.WriteLine("hilo  " + registros[31] +  " --->   Registro " + instruccion[2] +" = " + registros[instruccion[2]]);
-                                }
-
                                 break;
 
                             case 51: //SC;
-                               // int dirMemo = (registros[instruccion[1]] + instruccion[3]);
-                               // Console.WriteLine("hilo  " + registros[31] + " iniciando SC en  pos de memoria: " + dirMemo );
                                int coincideRL = ejecutarSC(ref a, ref b, registros[instruccion[1]] + instruccion[3], instruccion[2], ref p);
 
                                break;
@@ -579,7 +575,6 @@ namespace Proyecto_Arqui
          */ 
         private void cargarContexto(int[] contextoCargar)
         {
-
             for (int i = 0; i < 32; i++)
             {
                 registros[i] = contextoCargar[i];
@@ -587,6 +582,7 @@ namespace Proyecto_Arqui
             PC = contextoCargar[32];
             RL = -1;
             duracion = contextoCargar[34];
+            nombre = contextoCargar[35].ToString()+".txt";
 
         }
 
@@ -596,7 +592,7 @@ namespace Proyecto_Arqui
          */ 
         private int[] guardarContexto()
         {
-            int[] contextoGuardar = new int[35];
+            int[] contextoGuardar = new int[36];
             for (int i = 0; i < 32; i++)
             {
                 contextoGuardar[i] = registros[i];
@@ -693,6 +689,17 @@ namespace Proyecto_Arqui
         private void Procesador_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void siguienteBtn_Click(object sender, EventArgs e)
+        {
+            bool fin = false;
+            fin = org.sincronizarModoLento();
+            if (fin)
+            {
+                Resultados resultado = new Resultados(org);
+                resultado.imprimir();
+            }
         }
     }
 }
