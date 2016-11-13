@@ -255,9 +255,9 @@ namespace Proyecto_Arqui
             principal.CD2.DataSource = data2;
             principal.CD3.DataSource = data3;
 
-            principal.p1HililloTxt.Text = procesador1.nombre;
-            principal.p2HililloTxt.Text = procesador2.nombre;
-            principal.p3HililloTxt.Text = procesador3.nombre;
+            principal.p1HililloTxt.Text = procesador1.nombre+".txt";
+            principal.p2HililloTxt.Text = procesador2.nombre+".txt";
+            principal.p3HililloTxt.Text = procesador3.nombre+".txt";
 
             principal.p1RelojTxt.Text = reloj.ToString();
             principal.Visible = true;

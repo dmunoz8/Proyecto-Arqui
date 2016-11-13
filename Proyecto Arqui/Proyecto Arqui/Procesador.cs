@@ -581,7 +581,7 @@ namespace Proyecto_Arqui
             PC = contextoCargar[32];
             RL = -1;
             duracion = contextoCargar[34];
-            nombre = contextoCargar[35].ToString()+".txt";
+            nombre = contextoCargar[35].ToString();
 
         }
 
