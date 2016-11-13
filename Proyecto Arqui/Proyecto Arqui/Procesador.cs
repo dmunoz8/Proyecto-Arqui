@@ -137,7 +137,6 @@ namespace Proyecto_Arqui
                                 {
                                     //de memoria a caché = 28 ciclos
                                     sincronizacion.SignalAndWait();
-                                    Console.WriteLine(w);
                                 }
                                 while (lengthMemoria < 16)
                                 {
@@ -600,6 +599,7 @@ namespace Proyecto_Arqui
             contextoGuardar[32] = PC;
             contextoGuardar[33] = RL;
             contextoGuardar[34] = duracion;
+            contextoGuardar[35] = int.Parse(nombre);
 
             return contextoGuardar;
 

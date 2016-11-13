@@ -29,11 +29,11 @@
         private void InitializeComponent()
         {
             this.P1 = new System.Windows.Forms.GroupBox();
-            this.p1RelojTxt = new System.Windows.Forms.TextBox();
             this.p1HililloTxt = new System.Windows.Forms.TextBox();
             this.CD1 = new System.Windows.Forms.ListBox();
-            this.R1 = new System.Windows.Forms.Label();
             this.ID1 = new System.Windows.Forms.Label();
+            this.p1RelojTxt = new System.Windows.Forms.TextBox();
+            this.R1 = new System.Windows.Forms.Label();
             this.P2 = new System.Windows.Forms.GroupBox();
             this.p2HililloTxt = new System.Windows.Forms.TextBox();
             this.CD2 = new System.Windows.Forms.ListBox();
@@ -61,13 +61,6 @@
             this.P1.Text = "Procesador 1";
             this.P1.Enter += new System.EventHandler(this.P1_Enter);
             // 
-            // p1RelojTxt
-            // 
-            this.p1RelojTxt.Location = new System.Drawing.Point(74, 5);
-            this.p1RelojTxt.Name = "p1RelojTxt";
-            this.p1RelojTxt.Size = new System.Drawing.Size(100, 20);
-            this.p1RelojTxt.TabIndex = 6;
-            // 
             // p1HililloTxt
             // 
             this.p1HililloTxt.Location = new System.Drawing.Point(67, 31);
@@ -78,20 +71,10 @@
             // CD1
             // 
             this.CD1.FormattingEnabled = true;
-            this.CD1.Location = new System.Drawing.Point(10, 74);
+            this.CD1.Location = new System.Drawing.Point(10, 65);
             this.CD1.Name = "CD1";
-            this.CD1.Size = new System.Drawing.Size(199, 290);
+            this.CD1.Size = new System.Drawing.Size(199, 355);
             this.CD1.TabIndex = 2;
-            // 
-            // R1
-            // 
-            this.R1.AutoSize = true;
-            this.R1.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.R1.Location = new System.Drawing.Point(18, 3);
-            this.R1.Name = "R1";
-            this.R1.Size = new System.Drawing.Size(50, 19);
-            this.R1.TabIndex = 1;
-            this.R1.Text = "Reloj:";
             // 
             // ID1
             // 
@@ -102,6 +85,23 @@
             this.ID1.Size = new System.Drawing.Size(54, 19);
             this.ID1.TabIndex = 0;
             this.ID1.Text = "Hilillo:";
+            // 
+            // p1RelojTxt
+            // 
+            this.p1RelojTxt.Location = new System.Drawing.Point(75, 11);
+            this.p1RelojTxt.Name = "p1RelojTxt";
+            this.p1RelojTxt.Size = new System.Drawing.Size(100, 20);
+            this.p1RelojTxt.TabIndex = 6;
+            // 
+            // R1
+            // 
+            this.R1.AutoSize = true;
+            this.R1.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.R1.Location = new System.Drawing.Point(12, 12);
+            this.R1.Name = "R1";
+            this.R1.Size = new System.Drawing.Size(50, 19);
+            this.R1.TabIndex = 1;
+            this.R1.Text = "Reloj:";
             // 
             // P2
             // 
@@ -125,9 +125,9 @@
             // CD2
             // 
             this.CD2.FormattingEnabled = true;
-            this.CD2.Location = new System.Drawing.Point(10, 74);
+            this.CD2.Location = new System.Drawing.Point(10, 65);
             this.CD2.Name = "CD2";
-            this.CD2.Size = new System.Drawing.Size(199, 290);
+            this.CD2.Size = new System.Drawing.Size(199, 355);
             this.CD2.TabIndex = 3;
             // 
             // label2
@@ -162,9 +162,9 @@
             // CD3
             // 
             this.CD3.FormattingEnabled = true;
-            this.CD3.Location = new System.Drawing.Point(10, 74);
+            this.CD3.Location = new System.Drawing.Point(10, 65);
             this.CD3.Name = "CD3";
-            this.CD3.Size = new System.Drawing.Size(199, 290);
+            this.CD3.Size = new System.Drawing.Size(199, 355);
             this.CD3.TabIndex = 4;
             // 
             // ID3
